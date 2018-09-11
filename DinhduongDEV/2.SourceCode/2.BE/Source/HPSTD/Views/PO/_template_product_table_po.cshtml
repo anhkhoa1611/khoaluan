@@ -1,0 +1,94 @@
+﻿@{
+    Layout = null;
+    int i = 0;
+    double total = 0.0;
+    double sum_pricevat = 0.0;
+    double sum_total = 0.0;
+}
+<table cellpadding="2" cellspacing="0" style="vertical-align:bottom;font-family:Times New Roman; PADDING-LEFT:5pt; border-collapse:collapse;border:solid windowtext 1.0pt; width:117%; border-style:solid; margin-left:-65px; " border="1";>
+    <tbody>
+        <tr>
+            <td width="30" class="tab_head"><center><b>STT</b></center></td>
+            <td width="150" class="tab_head"><center><b>Đơn vị</b></center></td>
+            <td width="150" class="tab_head"><center><b>Ngày tờ trình</b></center></td>
+            <td width="200" class="tab_head"><center><b>Tên sản phẩm</b></center></td>
+            <td width="90" class="tab_head"><center><b>ĐVT</b></center></td>
+            <td width="90" class="tab_head"><center><b>Số lượng</b></center></td>
+            <td width="140" class="tab_head"><center><b>Đơn giá (chưa VAT)</b></center></td>
+            <td width="140" class="tab_head"><center><b>Thành tiền (chưa VAT)</b></center></td>
+            <td width="250" class="tab_head"><center><b>Địa chỉ giao hàng/Người nhận</b></center></td>
+            <td width="150" class="tab_head"><center><b>Thông tin nội bộ</b></center></td>
+        </tr>
+        @if (ViewBag.listitem.Count > 0)
+        {
+            foreach (var item in ViewBag.listitem)
+            {
+                i += 1;
+                total += item.thanh_tien;
+                <tr>
+                    <td class="tdtxt">@i</td>
+                    <td width="150">
+                        <div class="txttable">@item.ten_don_vi</div>
+                    </td>
+                    <td>
+                        <div class="txttable">@item.ma_phieu_PR</div>
+                    </td>
+                    <td width="200" >
+                        <div class="txttable" >@item.ten_san_pham</div>
+                    </td>
+                    <td width="90">
+                        <div class="txttable">@item.ten_don_vi_tinh</div>
+                    </td>
+                    <td width="90">
+                        @if (item.so_luong < 10)
+                        {
+                            <div class="txttable"><center><span>0</span>@item.so_luong</center></div>
+                        }
+                        else
+                        {
+                            <div class="txttable"><center>@item.so_luong</center></div>
+                        }                        
+                    </td>
+                    <td width="140">
+                        <div style="float:right" class="txttable">@item.don_gia.ToString("#,###")</div>
+                    </td>
+                    <td width="140">
+                        <div style="float:right" class="txttable">@item.thanh_tien.ToString("#,###")</div>
+                    </td>
+                    <td width="450">
+                        <div class="txttable">@item.ten_don_vi -</div>
+                        <div class="txttable">@item.dia_chi_dv</div>
+                    </td>
+                    <td width="150" >
+                        @*Thông tin nội bộ*@
+                        <div class="txttable">@item.thong_tin_noi_bo</div>
+                    </td>
+                </tr>
+            }
+            sum_pricevat = total * 0.1;
+            sum_total = sum_pricevat + total;
+
+        }
+        <tr>
+            <td colspan="6"><center><b>Tổng cộng:</b></center></td>
+            <td width="140" class="tab_head"><center></center></td>
+            <td width="140" class="tab_head"><center>@total.ToString("#,###")đ</center></td>
+            <td width="250" class="tab_head"><center></center></td>
+            <td width="150" class="tab_head"><center></center></td>
+        </tr>
+        <tr>
+            <td colspan="6"><center><b>Thuế GTGT:(10%) </b></center></td>
+            <td width="140" class="tab_head"><center></center></td>
+            <td width="140" class="tab_head"><center>@sum_pricevat.ToString("#,###")đ</center></td>
+            <td width="250" class="tab_head"><center></center></td>
+            <td width="150" class="tab_head"><center></center></td>
+        </tr>
+        <tr>
+            <td colspan="6"><center><b>Tổng thành tiền:  </b></center></td>
+            <td width="140" class="tab_head"><center></center></td>
+            <td width="140" class="tab_head"><center>@sum_total.ToString("#,###")đ</center></td>
+            <td width="250" class="tab_head"><center></center></td>
+            <td width="150" class="tab_head"><center></center></td>
+        </tr>
+    </tbody>
+</table>

@@ -1,0 +1,67 @@
+﻿@{
+    Layout = null;
+    int i = 0;
+    double total = 0.0;
+}
+<table cellpadding="2" cellspacing="0" style=" vertical-align:bottom;font-family:Times New Roman; PADDING-LEFT:5pt; border-collapse:collapse;border:solid windowtext 1.0pt; width:100%; border-style:solid" border="1">
+    <tbody>
+        <tr>
+            <td width="30" class="tab_head"><b>STT</b></td>
+            <td width="150" class="tab_head"><b>TÊN HÀNG HÓA TÀI SẢN ĐỀ NGHỊ MUA</b></td>
+            <td width="30" class="tab_head"><b>SL</b></td>
+            <td width="100" class="tab_head"><b>THƯƠNG HIỆU/THÔNG SỐ KỸ THUẬT</b></td>
+            <td width="100" class="tab_head"><b>CHI PHÍ DỰ KIẾN</b></td>
+            <td width="400" class="tab_head"><b>CHỨC DANH NGƯỜI SỬ DỤNG</b></td>
+            <td width="20" class="tab_head"><b>CÓ/KHÔNG CÓ TRONG KẾ HOẠCH NĂM</b></td>
+        </tr>
+        @if (ViewBag.listitem.Count > 0)
+        {
+            foreach (var item in ViewBag.listitem)
+            {
+                i += 1;
+                total += item.chi_phi;
+                <tr>
+                    <td class="tdtxt">@i</td>
+                    <td>
+                        <div class="txttable">@item.ten_san_pham</div>
+                    </td>
+                    <td>
+                        @if (item.so_luong < 10)
+                        {
+                            <div class="txttable"><center><span>0</span>@item.so_luong</center></div>
+                        }
+                        else
+                        {
+                            <div class="txttable"><center>@item.so_luong</center></div>
+                        }
+                        
+                    </td>
+                    <td>
+                        <div  class="txttable">@item.tieu_chi_ky_thuat</div>
+                    </td>
+                    <td>
+                      <div class="txttable" style="float:right">@item.don_gia_vat.ToString("#,###")đ</div>
+                    </td>
+                    <td>
+                        <div class="txttable">@item.chuc_danh_nguoi_su_dung</div>
+                    </td>
+                    <td>
+                        @if (item.ke_hoach_nam) {
+                            <div class="txttable">Có</div>
+                        }
+                        else{
+                            <div></div>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        <tr>
+            <td width="30" class="tab_head"><b></b></td>
+            <td width="150" class="tab_head"><b></b></td>
+            <td width="30" class="tab_head"><b></b></td>
+            <td width="100">Tổng chi phí dự kiến:</td>
+            <td colspan="3"><b style="float:right">@total.ToString("#,###")đ</b></td>
+        </tr>
+    </tbody>
+</table>

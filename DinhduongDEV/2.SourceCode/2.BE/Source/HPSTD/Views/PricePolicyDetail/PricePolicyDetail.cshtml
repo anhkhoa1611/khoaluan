@@ -1,0 +1,33 @@
+﻿@using HPSTD.Core.Entities
+@{
+    ViewBag.Title = "Chi tiết chính sách giá";
+    var newData = new ProductPriceDetail();
+}
+<style>
+    .form-actions {
+        background: 0 0 !important;
+        padding: 19px 10px !important;
+    }
+
+        .form-actions.right {
+            text-align: right !important;
+        }
+
+    .k-alt .editable {
+        background-color: #C8E6C9;
+        color: black;
+    }
+
+    .editable {
+        background-color: #E8F5E9;
+        color: black;
+    }
+</style>
+<script src="~/Scripts/autoNumeric-min.js"></script>
+<script src="~/Scripts/jquery.validate.js"></script>
+<div class="row-fluid widget-box">
+    <div class="span12">
+        <input type="text" id="txtSearch" class="span3" placeholder="Kế hoạch năm, tên đơn vị..." onkeyup="filter()" />
+
+    </div>
+</div>

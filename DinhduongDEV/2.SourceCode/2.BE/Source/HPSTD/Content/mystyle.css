@@ -1,0 +1,54 @@
+﻿.btnSearch{
+    padding-top: 0;
+    height:29px;
+    float:none;
+}
+.inline-xlite-width input {
+            min-width: 50px;
+        }
+
+        .blockUI.blockMsg.blockPage {
+            border: none !important;
+            background-color: rgba(102, 102, 102, 0) !important;
+        }
+
+        .dropdown-menu.dropdown-closer {
+            top: 97%;
+        }
+
+        .badge-noti {
+            width: 14px;
+            font-weight: normal;
+            font-size: 8px;
+            max-height: 14px;
+            padding: 0px;
+        }
+
+        .submenu {
+            z-index: 90000 !important;
+        }
+
+        .menu-text {
+            z-index: 99999 !important;
+        }
+
+        .error {
+            border: 1px solid #b94a48 !important;
+            background-color: #fee !important;
+        }
+
+        .page-content {
+            padding: 8px 10px 5px 10px;
+        }
+
+.Info {
+    height:15px;
+}
+
+.textinfomation{
+    color: #999;
+}
+
+.label-danger{
+    background-color: #D15B47 !important;
+}

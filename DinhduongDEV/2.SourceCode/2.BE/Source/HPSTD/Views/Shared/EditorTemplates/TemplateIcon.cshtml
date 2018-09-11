@@ -1,0 +1,10 @@
+﻿@model object
+@(Html.Kendo().DropDownListFor(m => m)
+.OptionLabel("Chọn icon...")
+//.Filter("contains")
+.Template("<i class='#=data.Text#'></i>")
+.ValueTemplate("<i class='#=data.Text#'></i>")
+.BindTo((SelectList)ViewData[ViewData.TemplateInfo.GetFullHtmlFieldName("") + "_Data"])
+
+)
+

@@ -1,0 +1,1695 @@
+﻿@using HDBank.Core.Entities
+@{
+    bool xem = ViewBag.accessDetail != null ? ViewBag.accessDetail.xem : false;
+    bool sua = ViewBag.accessDetail != null ? ViewBag.accessDetail.sua : false;
+    bool them = ViewBag.accessDetail != null ? ViewBag.accessDetail.them : false;
+    bool xoa = ViewBag.accessDetail != null ? ViewBag.accessDetail.xoa : false;
+    bool xuat = ViewBag.accessDetail != null ? ViewBag.accessDetail.xuat : false;
+    bool nhap = ViewBag.accessDetail != null ? ViewBag.accessDetail.nhap : false;
+
+    ViewBag.Title = "Duyệt GĐN mua sắm";
+    var newData = new PRequestHeader();
+}
+<style>
+    .k-alt .editable {
+        background-color: #C8E6C9;
+        color: black;
+    }
+
+    .editable {
+        background-color: #E8F5E9;
+        color: black;
+    }
+
+    div.fixed {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+    }
+
+    .k-input {
+        padding-top: 6px !important;
+    }
+
+    .panel-body {
+        border-top: none !important;
+    }
+</style>
+<script src="~/Scripts/jquery.validate.js"></script>
+<script src="~/Scripts/autoNumeric-min.js"></script>
+<script src="~/Scripts/bootbox.min.js"></script>
+
+
+<div class="row-fluid">
+    <div class="span12">
+        <div class="row-fluid">
+            <div class="col-sm-6">
+                <div class="tabbable">
+                    <ul class="nav nav-tabs tab-color-blue" id="myTab">
+                        <li class="active">
+                            <a data-toggle="tab" href="#home" aria-expanded="true" id="tabList">
+                                Danh sách GĐN mua sắm
+                            </a>
+                        </li>
+                        <li class="">
+                            <a data-toggle="tab" href="#edit" aria-expanded="false" id="tabAdd">
+                                Chi tiết GĐN mua sắm
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" style="padding-bottom:0px!important">
+                        <div id="home" class="tab-pane fade active in">
+                            <div class="row-fluid widget-box">
+                                <div class="span12">
+                                    <input type="text" id="Fdes" class="span4" placeholder="Nhập mã phiếu, tên phiếu..." onkeyup="filter()" />
+                                    <select id="FStatus" class="span4" multiple data-placeholder="Chọn trạng thái ...">
+                                        @foreach (var item in ViewBag.listTrangThai)
+                                        {
+                                            <option value="@item.ma_tham_so">@Html.Raw(item.gia_tri)</option>
+                                        }
+                                    </select>
+                                    <button type="button" id="btnSearch" class="btn btn-primary btn-small btnSearch" onclick="filter()" style="float:none">Lọc dữ liệu</button>
+                                </div>
+                            </div>
+                            <div class="row-fluid">
+                                @(Html.Kendo()
+                                    .Grid<HDBank.Core.Entities.PRequestHeader>()
+                                    .Name("grid")
+                                    .Columns(columns =>
+                                    {
+                                        columns.Bound(p => p.id)
+                                            .HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAll'  onClick='checkAll(this)' />")
+                                            .ClientTemplate("<input style='text-align:center' class='checkrowid' type='checkbox' # if (trang_thai != 'MOI') { # disabled # } # id='#=id#'/> ").Width(25).Filterable(false).Sortable(false);
+                                        columns.Template(@<text></text>).HtmlAttributes(new { style = "text-align: center;" })
+                                            .ClientTemplate("<span ><a class='btn btn-mini btn-warning' style ='width:40px' onclick='edit(this)'> Chi tiết </a></span> ").Width(70);
+                                        columns.Bound(p => p.ma_phieu).Width(130).Title("GĐN mua sắm số");
+                                        columns.ForeignKey(p => p.ma_chi_nhanh, (System.Collections.IEnumerable)ViewBag.listBranch, "ma_chi_nhanh", "ten_chi_nhanh").Title("Tên CN/Phòng/Ban/PGD ").Width(250);
+                                        columns.Bound(p => p.ten_phieu).Width(180).Title("Tên");
+                                        columns.Bound(p => p.ngay_tao_yeu_cau).Title("Ngày yêu cầu").Filterable(false).Width(120).Format("{0:dd/MM/yyyy}").HtmlAttributes(new { style = "text-align:right" });
+                                        columns.ForeignKey(p => p.trang_thai, (System.Collections.IEnumerable)ViewBag.listTrangThai, "ma_tham_so", "gia_tri").Title("Trạng thái").Width(200);
+                                        columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { @style = "text-align:right", columnname = "ngay_tao" });
+                                        columns.Bound(p => p.nguoi_tao).Title("Người tạo").Filterable(false).Width(90);
+                                        columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { @style = "text-align:right", columnname = "ngay_sua" });
+                                        columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Filterable(false).Width(90);
+                                    })
+                                    .ToolBar(toolbar =>
+                                    {
+                                        toolbar.Template(@<text>
+                                            <div class="pull-left">
+                                                @if (sua)
+                                                {
+                                                    if (ViewBag.isDuyetLevel1 == @AllConstant.XAC_NHAN_TRUONG_DON_VI)
+                                                    {
+                                                        <a class="btn btn-warning btn-small" href="javascript:void(0)" onclick="showPopupXacNhanTruongDonVi()" id="btnXacNhanTDV">Trưởng đơn vị duyệt</a>
+                                                    }
+                                                }
+                                            </div>
+                                        </text>);
+                                    })
+
+                                .Sortable()
+                                .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+                                .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                                .Pageable(p => p
+                                .Messages(m => m
+                                .Display("{0}-{1} của {2} dòng")
+                                .Empty("Không có dòng nào")
+                                .ItemsPerPage("dòng trên trang")
+                                .First("Trang kế")
+                                .Last("Trang tiếp")
+                                .Next("Đầu trang")
+                                .Previous("Cuối trang")
+                                )
+                                )
+                                .Scrollable()
+                                .Events(e =>
+                                {
+                                    e.DataBound("Databound");
+                                })
+                                .Navigatable()
+                                .Reorderable(r => r.Columns(true))
+                                .Resizable(r => r.Columns(true))
+                                .DataSource(dataSource => dataSource
+                                .Ajax()
+                                .PageSize(20)
+                                    //.Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+                                .Model(model =>
+                                {
+                                    model.Id(p => p.id);
+                                })
+                                .Read(read => read.Action("Read", "ApprovePR"))
+                                ))
+                            </div>
+
+                        </div>
+                        <div id="edit" class="tab-pane fade">
+                            <div class="span12 formEdit">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/template" id="EditTemplate">
+
+    <div id="accordion" class="accordion-style1 panel-group">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="\\#accordion" href="\\#collapseOne">
+                        <i class="ace-icon fa fa-angle-down bigger-110" data-icon-hide="ace-icon fa fa-angle-down" data-icon-show="ace-icon fa fa-angle-right"></i>
+                        I. Thông tin hàng hóa, tài sản đề nghị mua
+                    </a>
+                </h4>
+            </div>
+            <div class="panel-collapse collapse in" id="collapseOne">
+                <div class="panel-body">
+                    <div class="row-fluid">
+                        <form action="@Url.Content("~/ApprovePR/ApproveLevel3")" id="EditForm" method="post" enctype="multipart/form-data">
+                            <div class="row-fluid">
+                                <div class="span2">
+                                    <input type="hidden" name="id" value="#=id#" />
+                                    <div class="control-group">
+                                        <label>Số phiếu (*)</label>
+                                        <div class="controls">
+                                            <input type="text" readonly class="span12" placeholder="Số phiếu" id="ma_phieu" name="ma_phieu" value="#=ma_phieu!=null ? ma_phieu : ''#">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="span3">
+                                    <div class="control-group">
+                                        <label>Tên phiếu (*)</label>
+                                        <div class="controls">
+                                            <input type="text" readonly class="span12" placeholder="Tên phiếu" name="ten_phieu" value="#=ten_phieu!=null ? ten_phieu : ''#">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="span3">
+                                    <div class="control-group">
+                                        <label>Tên đơn vị</label>
+                                        <div class="controls">
+                                            <select id="cmbDonVi" name="ma_don_vi" class="span12 select2" readonly>
+                                                @foreach (var item in ViewBag.listBranch)
+                                                {
+                                                    <option value="@item.ma_chi_nhanh">@Html.Raw(item.ten_chi_nhanh)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="span2">
+                                    <div class="control-group">
+                                        <label>Ngày yêu cầu</label>
+                                        <div class="controls">
+                                            <input type="text" class="span12 date-picker" readonly placeholder="Ngày mua hàng" name="ngay_tao_yeu_cau" value="#=kendo.toString(kendo.parseDate(ngay_tao_yeu_cau),'dd/MM/yyyy') !='01/01/0001' && kendo.toString(kendo.parseDate(ngay_tao_yeu_cau),'dd/MM/yyyy') !='01/01/1900'  ? kendo.toString(kendo.parseDate(ngay_tao_yeu_cau),'dd/MM/yyyy'): ''#">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="span2">
+                                    <div class="control-group" style="padding-top: 25px;">
+                                        <a target="_blank" id="linkFileUploadChuKy">aaa</a>
+                                    </div>
+                                </div>
+                        </form>
+                    </div>
+                    
+                </div>
+
+                <div class="row-fluid">
+                    @(Html.Kendo()
+                                .Grid<HDBank.Core.Entities.PRequestDetail>()
+                                .Name("gridDetail")
+
+                                .Columns(columns =>
+                                {
+                                    columns.Bound(p => p.id)
+                                    .HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllDetail' onClick='checkAllDetail(this)' />")
+                                    .ClientTemplate("<input style='text-align:center' class='checkrowid' type='checkbox' id='\\#=id\\#'/> ")
+                                    .Width(25).Filterable(false).Sortable(false);
+                                    columns.ForeignKey(p => p.ma_san_pham, (System.Collections.IEnumerable)ViewBag.listProduct, "ma_san_pham", "ten_san_pham").Title("Tên hàng hóa").Width(160).EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { columnname = "ma_san_pham" });
+                                    if (ViewBag.isDuyetLevel3CNTT == @AllConstant.Y_KIEN_TTCN_NHDT || ViewBag.isDuyetLevel3QLDVKH_NQ == @AllConstant.Y_KIEN_QLDVKH_NQT
+                                    || ViewBag.isDuyetLevel3HO == @AllConstant.Y_KIEN_KHAC_HO)
+                                    {
+                                        columns.ForeignKey(p => p.ma_san_pham_thay_the, (System.Collections.IEnumerable)ViewBag.listProduct, "ma_san_pham", "ten_san_pham").Title("Tên hàng hóa thay thế").Width(200).EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { columnname = "ma_san_pham_thay_the" });
+                                    }
+                                    columns.Bound(p => p.so_luong).Title("SLĐN").Filterable(false).Width(45).Format("{0:N0}").HtmlAttributes(new { @style = "text-align:right", columnname = "so_luong" }).FooterTemplate("<div style='height: 20px'><span>Tổng:</span><span class='pull-right' style='color:red' id='tong_so_luong'>0</span></div></div>");
+                                    if (ViewBag.isDuyetLevel3CNTT == @AllConstant.Y_KIEN_TTCN_NHDT || ViewBag.isDuyetLevel3QLDVKH_NQ == @AllConstant.Y_KIEN_QLDVKH_NQT
+                                    || ViewBag.isDuyetLevel3HO == @AllConstant.Y_KIEN_KHAC_HO)
+                                    {
+                                        columns.Bound(p => p.so_luong_duyet).Title("SL Duyệt").Filterable(false).Width(70).Format("{0:N0}").HtmlAttributes(new { @style = "text-align:right", columnname = "so_luong_duyet" }).FooterTemplate("<div style='height: 20px'><span>Tổng duyệt:</span><span class='pull-right' style='color:red' id='tong_so_luong_duyet'>0</span></div></div>");
+                                    }
+                                    columns.ForeignKey(p => p.ma_nha_cung_cap, (System.Collections.IEnumerable)ViewBag.listVender, "nha_cung_cap_id", "ten_nha_cung_cap").Title("Nhà cung cấp").Width(160).EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { columnname = "ma_nha_cung_cap" }); ; ;
+                                    columns.Bound(p => p.don_gia_vat).Title("Đơn giá (VAT)").Filterable(false).Width(90).Format("{0:N0}").HtmlAttributes(new { @style = "text-align:right", columnname = "don_gia_vat" }).FooterTemplate("<div style='height: 20px'><span>TC(vnđ):</span><span class='pull-right' style='color:red' id='tong_don_gia_vat'>0</span></div></div>");
+                                    columns.Bound(p => p.thong_so_ky_thuat).Title("Thông số kỹ thuật").Filterable(false).Width(100).HtmlAttributes(new { columnname = "ma_nha_cung_cap" });
+                                    columns.Bound(p => p.chuc_danh_nguoi_su_dung).Title("Chức danh người sử dụng").Filterable(false).Width(130);
+                                    columns.Bound(p => p.noi_dung_xac_nhan_ton_kho).Title("Ý kiến xác nhận tồn kho").Filterable(false).Width(130).HtmlAttributes(new { columnname = "noi_dung_xac_nhan_ton_kho" });
+                                    columns.Bound(p => p.noi_dung_xac_nhan_cap_3).Title("Ý kiến xác nhận cấp 3").Filterable(false).Width(130).HtmlAttributes(new { columnname = "noi_dung_xac_nhan_cap_3" });
+                                    columns.Bound(p => p.ke_hoach_nam).Width(90).Title("Kế hoạch năm").ClientTemplate("\\#if(ke_hoach_nam){\\#Có\\#}else{\\#Không có\\#}\\#");
+                                    columns.ForeignKey(p => p.trang_thai, (System.Collections.IEnumerable)ViewBag.listTrangThai, "ma_tham_so", "gia_tri").Title("Trạng thái").Width(150).HtmlAttributes(new { columnname = "trang_thai" });
+                                    columns.Bound(p => p.don_gia).Hidden().HtmlAttributes(new { columnname = "don_gia" });
+                                    columns.Bound(p => p.thue_vat).Hidden().HtmlAttributes(new { columnname = "thue_vat" });
+                                    columns.Bound(p => p.don_vi_tinh).Hidden().HtmlAttributes(new { columnname = "don_vi_tinh" });
+                                    columns.Bound(p => p.ma_chinh_sach_gia).Hidden().HtmlAttributes(new { columnname = "ma_chinh_sach_gia" });
+                                    columns.Bound(p => p.thanh_tien).Title("Thành tiền").Hidden();
+                                })
+                                 .ToolBar(toolbar =>
+                                 {
+                                     toolbar.Template(@<text>
+                                    <div class="pull-left">
+                                        @if (sua)
+                                        {
+                                            if (ViewBag.isDuyetLevel1 == @AllConstant.XAC_NHAN_TRUONG_DON_VI)
+                                            {
+                                                <a class="btn btn-warning btn-small" href="javascript:void(0)" onclick="showPopupXacNhanTruongDonViDetail()" id="btnXacNhanTDVDetail">Trưởng đơn vị duyệt</a>
+                                            }
+                                            if (ViewBag.isDuyetLevel2 == @AllConstant.Y_KIEN_HCQT)
+                                            {
+                                                <a class="btn btn-warning btn-small" href="javascript:void(0)" onclick="showPopupXacNhanTonKho()" id="btnHCQT">Xác nhận tồn kho</a>
+                                            }
+
+                                            if (ViewBag.isDuyetLevel3CNTT == @AllConstant.Y_KIEN_TTCN_NHDT)
+                                            {
+                                                <a class="btn btn-success btn-small" href="javascript:void(0)" onclick="showPopupCNTT()" id="btnCMTTCN">Xác nhận CM TTCNTT</a>
+                                            }
+                                            if (ViewBag.isDuyetLevel3QLDVKH_NQ == @AllConstant.Y_KIEN_QLDVKH_NQT)
+                                            {
+                                                <a class="btn btn-success btn-small" href="javascript:void(0)" onclick="showPopupQLDVKH()" id="btnCMQLDVKH">Xác nhận CM QLDVKH</a>
+                                            }
+                                            if (ViewBag.isDuyetLevel3HO == @AllConstant.Y_KIEN_KHAC_HO)
+                                            {
+                                                <a class="btn btn-success btn-small" href="javascript:void(0)" onclick="showPopupHO()" id="btnCMKhacHO">Xác nhận CM HO</a>
+                                            }
+                                        }
+                                    </div>
+
+
+                                    </text>);
+                                 })
+                                    //.Sortable()
+                                    //.Editable(editable => editable.Mode(GridEditMode.InCell))
+                                    .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+                                    .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                                    .Pageable(p => p
+                                    .Messages(m => m
+                                    .Display("{0}-{1} của {2} dòng")
+                                    .Empty("Không có dòng nào")
+                                    .ItemsPerPage("dòng trên trang")
+                                    .First("Trang kế")
+                                    .Last("Trang tiếp")
+                                    .Next("Đầu trang")
+                                    .Previous("Cuối trang")
+                                    )
+                                    )
+                                    .Scrollable()
+                                    .Editable(edit => edit.Mode(GridEditMode.InCell))
+                                    .Events(e => { e.DataBound("onDatabound"); e.Edit("onEdit"); })
+                                    .Navigatable()
+                                    .Reorderable(r => r.Columns(true))
+                                    .Resizable(r => r.Columns(true))
+                                    .AutoBind(false)
+                                    .DataSource(dataSource => dataSource
+                                    .Ajax()
+                                    .Batch(true)
+                                    .Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); events.Change("onChange"); })
+                                    .PageSize(20)
+                                    //.Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+                                    .Model(model =>
+                                    {
+
+                                        model.Id(p => p.id);
+                                        model.Field(p => p.trang_thai).Editable(false);
+                                        model.Field(p => p.ma_san_pham).Editable(false);
+                                        model.Field(p => p.so_luong).Editable(false);
+
+                                        model.Field(p => p.don_gia_vat).Editable(false);
+                                        model.Field(p => p.thong_so_ky_thuat).Editable(false);
+                                        model.Field(p => p.chuc_danh_nguoi_su_dung).Editable(false);
+                                        model.Field(p => p.ke_hoach_nam).Editable(false);
+                                        if (ViewBag.isDuyetLevel3CNTT == @AllConstant.Y_KIEN_TTCN_NHDT || ViewBag.isDuyetLevel3QLDVKH_NQ == @AllConstant.Y_KIEN_QLDVKH_NQT
+                                          || ViewBag.isDuyetLevel3HO == @AllConstant.Y_KIEN_KHAC_HO)
+                                        {
+                                            model.Field(p => p.so_luong_duyet).Editable(true);
+                                            model.Field(p => p.ma_nha_cung_cap).Editable(true);
+                                        }
+                                        else
+                                        {
+                                            model.Field(p => p.so_luong_duyet).Editable(false);
+                                            model.Field(p => p.ma_nha_cung_cap).Editable(false);
+                                        }
+
+                                    })
+                                    .Read(read => read.Action("ReadDetail", "ApprovePR", new { ma_phieu_header = "" }))
+                                    .Update(update => update.Action("UpdateDetail", "ApprovePR").Data("getMaPhieu"))
+                                    )
+                                    .ToClientTemplate()
+                    )
+                </div>
+            </div>
+        </div>
+    </div>
+                <div id="accordion" class="accordion-style1 panel-group">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="\\#accordion" href="\\#collapseTwo">
+                                    <i class="ace-icon fa fa-angle-down bigger-110" data-icon-hide="ace-icon fa fa-angle-down" data-icon-show="ace-icon fa fa-angle-right"></i>
+                                    II. Mục đích mua sắm
+                                </a>
+                            </h4>
+                        </div>
+                        <div class="panel-collapse collapse in" id="collapseTwo">
+                            <div class="panel-body">
+                                <div class="row-fluid">
+                                    <span style="font-size: 14px;font-weight: normal;line-height: 20px;margin-top: 5px;color: blue;">1. Mua thay thế tài sản cũ:</span><input style="margin-left: 20px; margin-bottom: 5px;" type="checkbox" name="thay_the" value="#=thay_the!=false ? thay_the : false#" />
+                                    <table cellpadding="2" cellspacing="0" style="vertical-align:bottom; PADDING-LEFT:5pt; border-collapse:collapse;border:solid windowtext 1.0pt; width:100%; border-style:solid" border="1">
+                                        <tbody>
+                                            <tr>
+                                                <td width="30" class="tab_head"><center><b>STT</b></center></td>
+                                                <td width="150" class="tab_head"><center><b>THÔNG TIN TS CŨ</b></center></td>
+                                                <td width="100" class="tab_head"><center><b>TS1</b></center></td>
+                                                <td width="100" class="tab_head"><center><b>TS2</b></center></td>
+                                                <td width="100" class="tab_head"><center><b>TS3</b></center></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="tdtxt">1</td>
+                                                <td>
+                                                    <div>Mã tài sản tại HDBank</div>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <input type="text" style="width: 90%;" name="tai_san_cu_1" value="#=tai_san_cu_1!=null ? tai_san_cu_1 : ''#" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <input type="text" style="width: 90%;" name="tai_san_cu_2" value="#=tai_san_cu_2!=null ? tai_san_cu_2 : ''#" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <input type="text" style="width: 90%;" name="tai_san_cu_3" value="#=tai_san_cu_3!=null ? tai_san_cu_3 : ''#" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="tdtxt"></td>
+                                                <td colspan="12">
+                                                    <div>
+                                                        Lý do trình mua tài sản thay thế:
+                                                        <input style="width: 98%;" type="text" value="#=ly_do_thay_the!=null ? ly_do_thay_the : ''#" name="ly_do_thay_the" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <span style="font-size: 14px;font-weight: normal;line-height: 20px;margin-top: 5px;color: blue;">2. Mua phát sinh mới:</span><input style="margin-left: 20px; margin-bottom: 5px;" type="checkbox" name="mua_moi" value="#=mua_moi!=false ? mua_moi : false#" />
+                                    <div>
+                                        <table cellpadding="2" cellspacing="0" style="vertical-align:bottom; PADDING-LEFT:5pt; border-collapse:collapse;border:solid windowtext 1.0pt; width:100%; border-style:solid" border="1">
+                                            <tbody>
+                                                <tr>
+                                                    <td width="30" class="tab_head"><center><b>STT</b></center></td>
+                                                    <td width="150" class="tab_head"><center><b> HẠN MỨC</b></center></td>
+                                                    <td width="300" class="tab_head"><center><b>SỐ LƯỢNG</b></center></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="tdtxt">1</td>
+                                                    <td>
+                                                        <div>Định biên nhân sự của bộ phận sử dụng tài sản</div>
+                                                    </td>
+                                                    <td>
+                                                        <div>
+                                                            <input type="number" style="width: 90%;" value="#=so_luong_dinh_bien_nhan_su!=null ? so_luong_dinh_bien_nhan_su : ''#" name="so_luong_dinh_bien_nhan_su" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="tdtxt">2</td>
+                                                    <td>
+                                                        <div>Định mức tài sản cùng loại được giao sử dụng</div>
+                                                    </td>
+                                                    <td>
+                                                        <div>
+                                                            <input type="number" style="width: 90%;" value="#=so_luong_dinh_muc!=null ? so_luong_dinh_muc : ''#" name="so_luong_dinh_muc" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="tdtxt">3</td>
+                                                    <td colspan="12">
+                                                        <div>
+                                                            Lý do trình mua thêm tài sản:
+                                                            <textarea rows="5" style="width:98%" type="text" name="ly_do_mua_them" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="accordion" class="accordion-style1 panel-group">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="\\#accordion" href="\\#collapseThree">
+                                    <i class="ace-icon fa fa-angle-down bigger-110" data-icon-hide="ace-icon fa fa-angle-down" data-icon-show="ace-icon fa fa-angle-right"></i>
+                                    III.  Ý kiến của phòng ban nghiệp vụ
+                                </a>
+                            </h4>
+                        </div>
+                        <div class="panel-collapse collapse in" id="collapseThree">
+                            <div class="panel-body">
+                                <div class="row-fluid">
+                                    @*<label style="font-size: 14px;font-weight: normal;line-height: 20px;margin-top: 5px;color: blue;"><strong>:</strong></label>*@
+
+                                    @*<p style="padding-top:2px; margin:0"><strong>III.    Xác nhận tình trạng tài sản cũ: </strong> <strong style="color:blue;"> </strong></p>
+                                <p style="margin:0;"><i>(Thực hiện trong trường hợp mua thay thế tài sản cũ)</i></p>
+                                <div class="textdaudong" style="margin-top:3mm;">
+                                <div>
+                                <table cellpadding="2" cellspacing="0" style="vertical-align:bottom;font-family:Times New Roman; PADDING-LEFT:5pt; border-collapse:collapse;border:solid windowtext 1.0pt; width:100%; border-style:solid" border="1">
+                                <tbody>
+                                <tr>
+                                <td width="30" class="tab_head"><b>Ý kiến IT/HC tại đơn vị</b></td>
+                                </tr>
+                                <tr>
+                                <td class="tdtxt">
+                                <input readonly style="width: 98%;" type="text" name="y_kien_cua_don_vi" value="#=y_kien_cua_don_vi!=null ? y_kien_cua_don_vi : ''#"  />
+                                </td>
+                                </tr>
+                                </tbody>
+                                </table>
+                                </div>
+                                </div>
+                                <div>
+                                <br />
+                                <p>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; <strong>NGƯỜI LẬP ĐỀ NGHỊ</strong>
+                                &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>XÁC NHẬN CỦA TRƯỞNG ĐƠN VỊ</strong>
+                                </p>
+                                <p>
+                                &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>(Ký tên, ghi họ tên)</i>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                                &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp;
+                                &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<i>(Ký tên, đóng dấu ghi họ tên)</i>
+                                </p>
+                                <br />
+                                <br />
+                                <br />
+                                <p style="padding-top:2px;    padding-left: 90px; margin:0">
+                                <label readonly style="width: 20%;" name="nguoi_lap_de_nghi" />
+                                </p>
+                                <p>
+
+                                &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Số ĐT liên lạc:</i><input style="width: 20%; border:none" placeholder="..............." type="text" name="so_dt_lien_lac_nguoi_lap"  value="#=so_dt_lien_lac_nguoi_lap!=null ? so_dt_lien_lac_nguoi_lap : ''#" /> &nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                                &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;
+                                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                                <hr style="font-size:larger" />
+                                </p>
+                                    *@
+                                    <div>
+                                        <p style="padding-top:2px;    padding-left: 80px; margin:0"><strong>1.    Ý kiến của phòng ban nghiệp vụ liên quan </strong> <strong style="color:blue;"> </strong></p>
+                                        <p style="padding-top:2px;     padding-left: 120px;margin:0"><strong>1.1.P.HCQT(nếu có)</strong> <strong style="color:blue;"> </strong></p>
+                                        <p style="padding-top:2px;     padding-left: 120px;margin:0">
+                                            <textarea readonly rows="3" style="width: 90%;" type="text" placeholder="...................................." name="y_kien_HCQT" />
+                                        </p>
+                                        <p style="padding-top:2px; padding-left: 120px;margin:0"><strong>1.2.Khối TTCNTT&amp;NHĐT(nếu có)</strong> <strong style="color:blue;"> </strong></p>
+                                        <p style="padding-top:2px;     padding-left: 120px;margin:0">
+                                            <textarea readonly rows="3" style="width: 90%;" type="text" placeholder="...................................." name="y_kien_TTCNTT_NHDT" />
+                                        </p>
+                                        <p style="padding-top:2px; padding-left: 120px;margin:0"><strong>1.3.P.QLDVKH&amp;NQ(nếu có)</strong> <strong style="color:blue;"> </strong></p>
+                                        <p style="padding-top:2px;     padding-left: 120px;margin:0">
+                                            <textarea readonly rows="3" style="width: 90%;" type="text" placeholder="...................................." name="y_kien_QLDVKH_NQT" />
+                                        </p>
+                                        <p style="padding-top:2px; padding-left: 120px;margin:0"><strong>1.4.Đơn vị HO khác (nếu có)</strong> <strong style="color:blue;"> </strong></p>
+                                        <p style="padding-top:2px;     padding-left: 120px;margin:0">
+                                            <textarea readonly rows="3" style="width: 90%;" type="text" placeholder="...................................." name="y_kien_khac_HO" />
+                                        </p>
+
+                                        <p style="padding-top:2px;    padding-left: 80px; margin:0"><strong>2.    Phê duyệt </strong> <strong style="color:blue;"> </strong></p>
+                                        <p style="padding-top:2px;     padding-left: 120px;margin:0"><strong>2.1.Giám đốc tài chính</strong> <strong style="color:blue;"> </strong></p>
+                                        <p style="padding-top:2px;     padding-left: 120px;margin:0">
+                                            <textarea readonly rows="3" style="width: 90%;" type="text" placeholder="...................................." name="y_kien_GDTC" />
+                                        </p>
+                                        <p style="padding-top:2px; padding-left: 120px;margin:0"><strong>2.2.Tổng giám đốc</strong> <strong style="color:blue;"> </strong></p>
+                                        <p style="padding-top:2px;     padding-left: 120px;margin:0">
+                                            <textarea readonly rows="3" style="width: 90%;" type="text" placeholder="...................................." name="y_kien_TGD" />
+                                        </p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+        
+</script>
+
+
+
+<div id="popupXacNhanTDV" class="modal hide" style="width:50%">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Trưởng đơn vị duyệt</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid">
+            <div class="control-group">
+                <label class="control-label">Nội dung xác nhận</label>
+                <div class="controls">
+                    <textarea rows="3" style="width: 98%;" type="text" placeholder="" name="txtXacNhanTDV"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="XacNhanTDV()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+
+<div id="popupXacNhanTDVDetail" class="modal hide" style="width:50%">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Trưởng đơn vị duyệt</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid">
+            <div class="control-group">
+                <label class="control-label">Nội dung xác nhận</label>
+                <div class="controls">
+                    <textarea rows="3" style="width: 98%;" type="text" placeholder="" name="txtXacNhanTDVDetail"></textarea>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="XacNhanTDVDetail()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+<div id="popupXacNhanTonKho" class="modal hide" style="width:50%">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Phòng HCQT xác nhận tồn kho</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid">
+            <div class="control-group">
+                <label class="control-label">Nội dung xác nhận</label>
+                <div class="controls">
+                    <textarea rows="3" style="width: 98%;" type="text" placeholder="" name="txtXacNhanTonKho"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="XacNhanTonKho()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+<div id="popupCNTT" class="modal hide" style="width:50%">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Duyệt chuyên môn CNTT</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid">
+            <div class="control-group">
+                <label class="control-label">Nội dung xác nhận</label>
+                <div class="controls">
+                    <textarea rows="3" style="width: 98%;" type="text" placeholder="" name="txtCNTT" id="txtCNTT"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="DuyetCMCNTT()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+<div id="popupQLDVKH" class="modal hide" style="width:50%">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Duyệt chuyên môn QLDVKH</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid">
+            <div class="control-group">
+                <label class="control-label">Nội dung xác nhận</label>
+                <div class="controls">
+                    <textarea rows="3" style="width: 98%;" type="text" placeholder="" name="txtQLDVKH" id="txtQLDVKH"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="DuyetCMQLDVKH()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+<div id="popupHO" class="modal hide" style="width:50%">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Duyệt chuyên môn HO</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid">
+            <div class="control-group">
+                <label class="control-label">Nội dung xác nhận</label>
+                <div class="controls">
+                    <textarea rows="3" style="width: 98%;" type="text" placeholder="" name="txtHO" id="txtHO"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="DuyetCMHO()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        loadValidateUploadFile();
+    })
+
+    $('#tabAdd').css('display', 'none');
+    $('#FStatus').chosen();
+    $("#cmbDonVi").chosen();
+    function onChange(e) {
+        if (e.action === "itemchange") {
+            var model = e.items[0];
+            if (e.field == "so_luong_duyet") {
+
+                var so_luong_duyet = model.so_luong_duyet;
+                var so_luong = model.so_luong;
+                if (so_luong_duyet > so_luong) {
+                    so_luong_duyet = so_luong;
+                }
+                if (so_luong_duyet < 0) {
+                    so_luong_duyet = 0;
+
+                }
+                model.set("so_luong_duyet", so_luong_duyet);
+
+            }
+
+            if (e.field == "ma_san_pham_thay_the") {
+                if (model.ma_san_pham_thay_the != null && model.ma_san_pham_thay_the != '') {
+                    $.ajax({
+                        type: "GET",
+                        async: false,
+                        url: r + "/ApprovePR/GetVenderByProduct",
+                        data: { ma_san_pham: model.ma_san_pham_thay_the },
+                        success: function (data) {
+                            if (data.success) {
+                                dataVender = data.data;
+                                $("#ma_nha_cung_cap").kendoDropDownList({
+                                    dataSource: dataVender,
+                                    dataTextField: "ten_nha_cung_cap",
+                                    dataValueField: "nha_cung_cap_id",
+                                    optionLabel: "Select ...",
+                                    filter: "contains",
+                                });
+                            }
+                        }
+                    });
+
+                    $.ajax({
+                        type: "GET",
+                        async: false,
+                        url: r + "/PR/GetPriceByCGSVendor",
+                        data: { ma_san_pham: model.ma_san_pham_thay_the, so_luong: model.so_luong, ma_nha_cung_cap: model.ma_nha_cung_cap },
+                        success: function (data) {
+                            if (data.success) {
+                                model.don_gia_vat = data.data.gia_bao_gom_vat;
+                                model.don_gia = data.data.gia_bao;
+                                model.thue_vat = data.data.thue_vat;
+                                model.don_vi_tinh = data.data.don_vi_tinh;
+                                model.thanh_tien = data.data.gia_bao_gom_vat * model.so_luong;
+                                model.ma_chinh_sach_gia = data.data.ma_chinh_sach_gia;
+                                $("#gridDetail").find("tr[data-uid='" + model.uid + "'] td[columnname='don_gia_vat']").text(currency2String(data.data.gia_bao_gom_vat));
+                                $("#gridDetail").find("tr[data-uid='" + model.uid + "'] td[columnname='thanh_tien']").text(currency2String(model.thanh_tien));
+                            }
+                        }
+                    });
+                }
+                else {
+                    $.ajax({
+                        type: "GET",
+                        async: false,
+                        url: r + "/ApprovePR/GetVenderByProduct",
+                        data: { ma_san_pham: model.ma_san_pham },
+                        success: function (data) {
+                            if (data.success) {
+                                dataVender = data.data;
+                                $("#ma_nha_cung_cap").kendoDropDownList({
+                                    dataSource: dataVender,
+                                    dataTextField: "ten_nha_cung_cap",
+                                    dataValueField: "nha_cung_cap_id",
+                                    optionLabel: "Select ...",
+                                    filter: "contains",
+                                });
+                            }
+                        }
+                    });
+
+                    $.ajax({
+                        type: "GET",
+                        async: false,
+                        url: r + "/PR/GetPriceByCGSVendor",
+                        data: { ma_san_pham: model.ma_san_pham, so_luong: model.so_luong, ma_nha_cung_cap: model.ma_nha_cung_cap },
+                        success: function (data) {
+                            if (data.success) {
+                                model.don_gia_vat = data.data.gia_bao_gom_vat;
+                                model.don_gia = data.data.gia_bao;
+                                model.thue_vat = data.data.thue_vat;
+                                model.don_vi_tinh = data.data.don_vi_tinh;
+                                model.thanh_tien = data.data.gia_bao_gom_vat * model.so_luong;
+                                model.ma_chinh_sach_gia = data.data.ma_chinh_sach_gia;
+                                $("#gridDetail").find("tr[data-uid='" + model.uid + "'] td[columnname='don_gia_vat']").text(currency2String(data.data.gia_bao_gom_vat));
+                                $("#gridDetail").find("tr[data-uid='" + model.uid + "'] td[columnname='thanh_tien']").text(currency2String(model.thanh_tien));
+                            }
+                        }
+                    });
+                }
+            }
+
+            if (e.field == "ma_nha_cung_cap") {
+                if (model.ma_san_pham_thay_the != null && model.ma_san_pham_thay_the != '') {
+                    $.ajax({
+                        type: "GET",
+                        async: false,
+                        url: r + "/PR/GetPriceByCGSVendor",
+                        data: { ma_san_pham: model.ma_san_pham_thay_the, so_luong: model.so_luong, ma_nha_cung_cap: model.ma_nha_cung_cap },
+                        success: function (data) {
+                            if (data.success) {
+                                model.don_gia_vat = data.data.gia_bao_gom_vat;
+                                model.don_gia = data.data.gia_bao;
+                                model.thue_vat = data.data.thue_vat;
+                                model.don_vi_tinh = data.data.don_vi_tinh;
+                                model.thanh_tien = data.data.gia_bao_gom_vat * model.so_luong;
+                                model.ma_chinh_sach_gia = data.data.ma_chinh_sach_gia;
+                                $("#gridDetail").find("tr[data-uid='" + model.uid + "'] td[columnname='don_gia_vat']").text(currency2String(data.data.gia_bao_gom_vat));
+                                $("#gridDetail").find("tr[data-uid='" + model.uid + "'] td[columnname='thanh_tien']").text(currency2String(model.thanh_tien));
+                            }
+                        }
+                    });
+                }
+                else {
+                    $.ajax({
+                        type: "GET",
+                        async: false,
+                        url: r + "/PR/GetPriceByCGSVendor",
+                        data: { ma_san_pham: model.ma_san_pham, so_luong: model.so_luong, ma_nha_cung_cap: model.ma_nha_cung_cap },
+                        success: function (data) {
+                            if (data.success) {
+                                model.don_gia_vat = data.data.gia_bao_gom_vat;
+                                model.don_gia = data.data.gia_bao;
+                                model.thue_vat = data.data.thue_vat;
+                                model.don_vi_tinh = data.data.don_vi_tinh;
+                                model.thanh_tien = data.data.gia_bao_gom_vat * model.so_luong;
+                                model.ma_chinh_sach_gia = data.data.ma_chinh_sach_gia;
+                                $("#gridDetail").find("tr[data-uid='" + model.uid + "'] td[columnname='don_gia_vat']").text(currency2String(data.data.gia_bao_gom_vat));
+                                $("#gridDetail").find("tr[data-uid='" + model.uid + "'] td[columnname='thanh_tien']").text(currency2String(model.thanh_tien));
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        var total_don_gia_vat = 0;
+        var total_slduyet = 0;
+        $.each($("#gridDetail").data("kendoGrid").dataSource.data(), function () {
+            total_don_gia_vat = total_don_gia_vat + (this.don_gia_vat * this.so_luong_duyet);
+            total_slduyet = total_slduyet + this.so_luong_duyet;
+        });
+
+        $('#tong_so_luong_duyet').text(currency2String(total_slduyet));
+        $('#tong_don_gia_vat').text(currency2String(total_don_gia_vat));
+    }
+
+    function drawcolorHeader() {
+        var data = $("#grid").data("kendoGrid").dataSource.data();
+        var iit = 7;
+        $.each(data, function (i, row) {
+            try {
+                if (row.trang_thai == 'DA_DUYET') {
+                    $('tr[data-uid="' + row.uid + '"] td:nth-child(' + iit + ')').css("color", "white").css("background", "#468847");
+                }
+                else if (row.trang_thai == 'MOI') {
+                    $('tr[data-uid="' + row.uid + '"] td:nth-child(' + iit + ')').css("color", "white").css("background", "#d15b47");
+                }
+                else {
+                    $('tr[data-uid="' + row.uid + '"] td:nth-child(' + iit + ')').css("color", "white").css("background", "#a1703a");
+                }
+            }
+            catch (err) {
+            }
+        });
+    }
+    function drawcolor() {
+        var data = $("#gridDetail").data("kendoGrid").dataSource.data();
+        var int = 12;
+        $.each(data, function (i, row) {
+            try {
+                if (row.trang_thai == 'DA_DUYET') {
+                    $('tr[data-uid="' + row.uid + '"] td[columnname="trang_thai"]').css("color", "white").css("background", "#468847");
+                }
+                else {
+                    $('tr[data-uid="' + row.uid + '"] td[columnname="trang_thai"]').css("color", "white").css("background", "#d15b47");
+                }
+            }
+            catch (err) {
+            }
+        });
+    }
+    //chuyen doi so --> chuoi dinh danh tien $1,000
+    function currency2String(value) {
+        return value.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,")
+    }
+    function onDatabound(e) {
+        var listView = this;
+        var total_don_gia_vat = 0;
+        var total_sl = 0;
+        var data = e.sender.dataSource._data;
+        for (var i = 0; i < data.length; i++) {
+            total_don_gia_vat = total_don_gia_vat + (data[i].don_gia_vat * data[i].so_luong_duyet);
+            total_sl = total_sl + data[i].so_luong;
+        }
+        $('#tong_so_luong').text(currency2String(total_sl));
+        $('#tong_don_gia_vat').text(currency2String(total_don_gia_vat));
+        drawcolor();
+    }
+    loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+
+    function onEdit(e) {
+        var dataVender = { nha_cung_cap_id: "", ten_nha_cung_cap: "" };
+        var dataVenderInit = { nha_cung_cap_id: "", ten_nha_cung_cap: "" };
+        var dataItem = $("#gridDetail").data('kendoGrid').dataItem($(e.container).closest("tr"));
+        var ma_san_pham = dataItem.ma_san_pham;
+        var so_luong = dataItem.so_luong;
+        var ma_nha_cung_cap = dataItem.ma_nha_cung_cap;
+
+        //$.ajax({
+        //    type: "GET",
+        //    async: false,
+        //    url: r + "/ApprovePR/GetVenderByProduct",
+        //    data: { ma_san_pham: ma_san_pham },
+        //    success: function (data) {
+        //        if (data.success) {
+        //            dataVender = data.data;
+        //            $("#ma_nha_cung_cap").kendoDropDownList({
+        //                dataSource: dataVender,
+        //                dataTextField: "ten_nha_cung_cap",
+        //                dataValueField: "nha_cung_cap_id",
+        //                optionLabel: "Select ...",
+        //                filter: "startswith",
+        //            });
+        //        }
+        //    }
+        //});
+
+
+        //$.ajax({
+        //    type: "GET",
+        //    async: false,
+        //    url: r + "/ApprovePR/GetPriceByCGSVender",
+        //    data: { ma_san_pham: ma_san_pham, so_luong: so_luong, ma_nha_cung_cap: ma_nha_cung_cap },
+        //    success: function (data) {
+        //        if (data.success) {
+
+        //            // e.container.find("input[name=chi_phi]").data("kendoTextBox").value(data.data);
+        //            $("#don_gia_vat").val(data.data).change();
+        //        }
+        //    }
+        //});
+
+
+    }
+    //function onSave(e) {
+
+    //}
+
+    //function getMaPhieu() {
+    //    $("input[name='ma_phieu']").prop("disabled", false);
+    //    return {
+    //        ma_phieu: $("input[name='ma_phieu']").val()
+    //    }
+    //}
+
+    function error_handler(e) {
+        if (e.errors) {
+            var message = "Errors:\n";
+            $.each(e.errors, function (key, value) {
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += this + "\n";
+                    });
+                }
+            });
+        }
+    }
+    function onRequestEnd(e) {
+        if (e.type == "update" || e.type == "create" || e.type == "delete") {
+            if (e.response.Errors == null) {
+                if (e.response.Errors == null) {
+                }
+            }
+        }
+    }
+
+
+    function checkAll(e) {
+        var x = $(e).prop('checked');
+        $('#grid').find(".checkrowid:not(:disabled)").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+
+    var ma_phieu_header;
+    function initPlugins() {
+        $("input[name='so_luong'], input[name='don_gia_vat']").autoNumeric("init", {
+            aSep: ',',
+            aPad: false,
+            lZero: 'deny'
+        });
+    }
+
+    function loadForm(data) {
+        var EditTemplate = kendo.template($("#EditTemplate").html());
+        $(".formEdit").html(EditTemplate(data));
+        $('.date-picker').datepicker({ format: 'dd/mm/yyyy', autoclose: true, todayHighlight: true, startDate: 'today' });
+        loadValidate(data);
+    }
+    function loadValidateDetail() {
+        $("#editFormBranch").validate({
+            rules: {
+                'ma_san_pham': { required: true },
+                'so_luong': { required: true },
+            },
+            errorPlacement: function (error, element) {
+            },
+            submitHandler: function (form) {
+
+                $(form).ajaxSubmit({
+                    clearForm: false,
+                    success: function (data) {
+                        if (data.success) {
+                            $("#gridDetail").data("kendoGrid").dataSource.read({ ma_phieu_header: ma_phieu_header });
+                            $.gritter.add({
+                                text: "Lưu thành công",
+                                class_name: 'gritter-success'
+                            });
+                            $('#ma_phieu').val(ma_phieu_header);
+                        }
+                        else {
+                            $.gritter.add({
+                                text: data.error,
+                                class_name: 'gritter-error'
+                            });
+                        }
+                    }
+                });
+                return false;
+            }
+        });
+    }
+
+    var nhom_chuyen_mon;
+    var note;
+
+    function loadValidate() {
+        $("#EditForm").validate({
+            rules: {
+            },
+            errorPlacement: function (error, element) {
+            },
+            submitHandler: function (form) {
+                var details = [];
+
+                $('#gridDetail').find(".checkrowid").each(function () {
+                    if ($(this).prop('checked') == true) {
+                        var item = $('#gridDetail').data('kendoGrid').dataItem($(this).closest("tr"));
+                        //listrowid += item.id + '@@@@';
+                        //listykien += item.noi_dung_xac_nhan_ton_kho + '@@@@';
+                        details.push({
+                            id: item.id,
+                            ma_san_pham: item.ma_san_pham,
+                            ma_san_pham_thay_the: item.ma_san_pham_thay_the,
+                            ma_nha_cung_cap: item.ma_nha_cung_cap,
+                            don_gia_vat: item.don_gia_vat,
+                            don_gia: item.don_gia,
+                            thue_vat: item.thue_vat,
+                            don_vi_tinh: item.don_vi_tinh,
+                            thanh_tien: item.thanh_tien,
+                            ma_chinh_sach_gia: item.ma_chinh_sach_gia,
+                            noi_dung_xac_nhan_cap_3: item.noi_dung_xac_nhan_cap_3,
+                            so_luong_duyet: item.so_luong_duyet,
+                        });
+                    }
+                });
+
+                $(form).ajaxSubmit({
+                    clearForm: false,
+                    data: { details: details, nhom_chuyen_mon: nhom_chuyen_mon, note: note },
+                    success: function (data) {
+                        if (data.success) {
+                            $("#grid").data("kendoGrid").dataSource.read();
+                            $("#gridDetail").data("kendoGrid").dataSource.read({ ma_phieu_header: ma_phieu_header });
+
+                            if (nhom_chuyen_mon == '@AllConstant.Y_KIEN_TTCN_NHDT')
+                                $('#popupCNTT').modal('hide');
+
+                            if (nhom_chuyen_mon == '@AllConstant.Y_KIEN_QLDVKH_NQT')
+                                $('#popupQLDVKH').modal('hide');
+
+                            if (nhom_chuyen_mon == '@AllConstant.Y_KIEN_KHAC_HO')
+                                $('#popupHO').modal('hide');
+
+                            $.gritter.add({
+                                text: "Lưu thành công",
+                                class_name: 'gritter-success'
+                            });
+                        }
+                        else {
+                            $.gritter.add({
+                                text: data.error,
+                                class_name: 'gritter-error'
+                            });
+                        }
+                    }
+                });
+                return false;
+            }
+        });
+    }
+
+    var trang_thai;
+    var dataid;
+    function edit(e) {
+        debugger;
+        var data = $("#grid").data("kendoGrid").dataItem($(e).closest("tr"));
+        $("#tabAdd").trigger("click");
+        $('#tabAdd').css('display', 'block');
+        $('#tabAdd').text('').append('Chi tiết GĐN mua sắm')
+        loadForm(data);
+        $("#cmbDonVi").val(data.ma_chi_nhanh)
+        ma_phieu_header = data.ma_phieu
+        dataid = data.id;
+        $("#gridDetail").data("kendoGrid").dataSource.read({ ma_phieu_header: data.ma_phieu });
+        $('textarea[name="ly_do_mua_them"]').text(data.ly_do_mua_them);
+        $('label[name="nguoi_lap_de_nghi"]').text(data.nguoi_lap_de_nghi);
+        $('textarea[name="y_kien_HCQT"]').val(data.y_kien_HCQT);
+        $('textarea[name="y_kien_TTCNTT_NHDT"]').val(data.y_kien_TTCNTT_NHDT);
+        $('textarea[name="y_kien_QLDVKH_NQT"]').val(data.y_kien_QLDVKH_NQT);
+        $('textarea[name="y_kien_khac_HO"]').val(data.y_kien_khac_HO);
+        $('textarea[name="y_kien_GD_Tai_Chinh"]').val(data.y_kien_GD_Tai_Chinh);
+        $('textarea[name="y_kien_TGD"]').val(data.y_kien_TGD);
+
+        $('#linkFileUploadChuKy').prop("href", r + data.file_chu_ki_TDV)
+        $('#linkFileUploadChuKy').text('');
+        if (data.file_chu_ki_TDV != null)
+            $('#linkFileUploadChuKy').text('File chữ ký');
+
+        //$('#btnXacNhanTDV').hide();
+        $('#btnHCQT').hide();
+        $('#btnCMTTCN').hide();
+        $('#btnCMQLDVKH').hide();
+        $('#btnCMKhacHO').hide();
+        $('#btnXacNhanTDVDetail').hide();
+
+
+        trang_thai = data.trang_thai;
+        if (data.trang_thai == 'MOI') {
+            $('#btnXacNhanTDVDetail').show();
+        }
+
+        if (data.trang_thai == 'TDV_DA_XAC_NHAN' || data.trang_thai == 'DA_XAC_NHAN_TON_KHO_MOT_PHAN') {
+            $('#btnHCQT').show();
+        }
+
+        if (data.trang_thai == 'DA_XAC_NHAN_TON_KHO' || data.trang_thai == 'CNTT_DA_DUYET_CHUYEN_MON' || data.trang_thai == 'QLDVKH_DA_DUYET_CHUYEN_MON' || data.trang_thai == 'HO_DA_DUYET_CHUYEN_MON') {
+            $('#btnCMTTCN').show();
+            $('#btnCMQLDVKH').show();
+            $('#btnCMKhacHO').show();
+        }
+
+        if (data.mua_moi == 1) {
+            $('input[name="mua_moi"]').prop("checked", true);
+        }
+        else {
+            $('input[name="mua_moi"]').prop("checked", false);
+        }
+        if (data.thay_the == 1) {
+            $('input[name="thay_the"]').prop("checked", true);
+        }
+        else {
+            $('input[name="thay_the"]').prop("checked", false);
+        }
+    }
+
+    function editDetail(e) {
+        var dataItem = $("#gridDetail").data("kendoGrid").dataItem($(e).closest("tr"));
+        $('#BranchForm').modal('show');
+        $('#titePopup').text("Chỉnh sửa");
+        var EditTemplate = kendo.template($("#EditBranchTemplate").html());
+        $(".BranchEdit").html(EditTemplate({}));
+        $('#ma_phieu').val(ma_phieu_header);
+        loadValidateDetail();
+        initPlugins();
+        //$.post(r + "/Product/GetProductByVenderId", { ma_ncc: dataItem.ma_nha_cung_cap }, function (data) {
+        //    if (data.success) {
+        //        var strOption = '<option> -- Sản phẩm --  </option>';
+        //        var listproduct = data.data;
+        //        $.each(listproduct, function (i, v) {
+        //            if (dataItem.ma_san_pham == v.id) {
+        //                strOption += "<option selected='selected' value = '" + v.id + "'> " + v.ten_san_pham + "</option>";
+        //            } else {
+        //                strOption += "<option value = '" + v.id + "'> " + v.ten_san_pham + "</option>";
+        //            }
+        //        });
+        //        $('#ma_san_pham').chosen('destroy');
+        //        $('#ma_san_pham').html(strOption);
+        //        $('#ma_san_pham').chosen();
+        //        $('#ma_san_pham').val(dataItem.ma_san_pham).trigger("chosen:updated");
+        //    }
+        //});
+        $('#id').val(dataItem.id);
+        $('#ma_san_pham').val(dataItem.ma_san_pham);
+        $('select[name="ma_nha_cung_cap"]').val(dataItem.ma_nha_cung_cap).trigger("chosen:updated");
+        $('select[name="ma_nha_cung_cap"]').chosen();
+        $('#tieu_chi_ky_thuat').val(dataItem.tieu_chi_ky_thuat);
+        $("input[name='don_gia_vat']").val(dataItem.don_gia_vat);
+        $("input[name='so_luong']").val(dataItem.so_luong);
+        $("input[name='chuc_danh_nguoi_su_dung']").val(dataItem.chuc_danh_nguoi_su_dung);
+        var kehoachnam = 'false';
+        if (dataItem.ke_hoach_nam == true) {
+            kehoachnam = 'true';
+        }
+        $('select[name="ke_hoach_nam"]').val(kehoachnam);
+    }
+    $("#tabList").bind('click', function () {
+        $('#tabAdd').text('').append('Thêm phiếu yêu cầu');
+        $('#tabAdd').css('display', 'none');
+    });
+    @*$("#tabAdd").bind('click', function () {
+        loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+        $("input[name='ten_phieu']").val("ĐỀ NGHỊ MUA SẮM");
+    });*@
+    var reset = false;
+    function saveAndClear(key) {
+        reset = true;
+        $('#EditForm').submit();
+    }
+    function saveFrom() {
+        $('#EditForm').submit();
+    }
+    var Id;
+
+    function Databound() {
+        resizeGrid();
+        drawcolorHeader()
+    }
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+        dataArea = gridElement.find(".k-grid-content"),
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 15);
+    }
+    function filter() {
+        grid = $("#grid").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        var text = $("#Fdes").val();
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "ma_phieu", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ten_phieu", operator: "contains", value: text });
+            filter.filters.push(filterOr);
+        }
+        var listStatus = $("#FStatus option:selected");
+        var fillterStatus = { logic: "or", filters: [] };
+        if (listStatus.length > 0) {
+            for (var i = 0; i < listStatus.length; i++) {
+                var option = listStatus[i].value;
+                if (option != '') {
+                    fillterStatus.filters.push({ field: "trang_thai", operator: "eq", value: option });
+                }
+            }
+            filter.filters.push(fillterStatus);
+        }
+        grid.dataSource.filter(filter);
+    }
+    function checkAllDetail(e) {
+        var x = $(e).prop('checked');
+        $("#gridDetail").find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+
+</script>
+@*Truong don vi xac nhan*@
+<script>
+    function showPopupXacNhanTruongDonVi() {
+        var listrowid = "";
+        $('#grid').find(".checkrowid:not(:disabled)").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+
+            $('textarea[name="txtXacNhanTDV"]').val('');
+            $("#divMaskPopup").show();
+            $('#popupXacNhanTDV').modal('show');
+        }
+        else {
+            $.gritter.add({
+                text: "Vui lòng chọn phiếu để xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+        return;
+    }
+
+    function showPopupXacNhanTruongDonViDetail() {
+
+        $('textarea[name="txtXacNhanTDVDetail"]').val('');
+        $("#divMaskPopup").show();
+        $('#popupXacNhanTDVDetail').modal('show');
+
+    }
+
+    function XacNhanTDV() {
+        var txtNote = $('textarea[name="txtXacNhanTDV"]').val();
+        if (txtNote == null || txtNote == '') {
+            $.gritter.add({
+                text: "Vui lòng nhập nội dung xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+
+        var listrowid = "";
+        $('#grid').find(".checkrowid:not(:disabled)").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+
+        if (listrowid != "" && listrowid != null) {
+            $.post(r + "/ApprovePR/XacNhanTDV", { data: listrowid, note: txtNote }, function (data) {
+                if (data.success) {
+                    $.gritter.add({
+                        text: "Xác nhận thành công",
+                        class_name: 'gritter-success'
+                    });
+                    $("#grid").data("kendoGrid").dataSource.read();
+                    $('#popupXacNhanTDV').modal('hide');
+                }
+                else {
+                    $.gritter.add({
+                        text: data.error,
+                        class_name: 'gritter-error'
+                    });
+                }
+            });
+
+            if ($('#FileChuKy').val() != "") {
+                $("#importForm").submit();
+            }
+        }
+    }
+
+    function XacNhanTDVDetail() {
+        var txtNote = $('textarea[name="txtXacNhanTDVDetail"]').val();
+        if (txtNote == null || txtNote == '') {
+            $.gritter.add({
+                text: "Vui lòng nhập nội dung xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+
+        $.post(r + "/ApprovePR/XacNhanTDV", { data: dataid, note: txtNote }, function (data) {
+            if (data.success) {
+                $.gritter.add({
+                    text: "Xác nhận thành công",
+                    class_name: 'gritter-success'
+                });
+                $("#grid").data("kendoGrid").dataSource.read();
+                $('#btnXacNhanTDVDetail').hide();
+                $('#popupXacNhanTDVDetail').modal('hide');
+            }
+            else {
+                $.gritter.add({
+                    text: data.error,
+                    class_name: 'gritter-error'
+                });
+            }
+        });
+
+    }
+</script>
+
+@*Phong hanh chinh quan tri xac nhan ton kho*@
+<script>
+    function showPopupXacNhanTonKho() {
+        var listrowid = "";
+        $('#gridDetail').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+
+            $('textarea[name="txtXacNhanTonKho]').val('');
+            $("#divMaskPopup").show();
+            $('#popupXacNhanTonKho').modal('show');
+        }
+        else {
+            $.gritter.add({
+                text: "Vui lòng chọn sản phẩm để xác nhận tồn kho",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+        return;
+    }
+
+    function XacNhanTonKho() {
+        debugger;
+        var txtNote = $('textarea[name="txtXacNhanTonKho"]').val();
+        if (txtNote == null || txtNote == '') {
+            $.gritter.add({
+                text: "Vui lòng nhập nội dung xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+
+        var listrowid = "";
+        var listykien = "";
+        $('#gridDetail').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                var item = $('#gridDetail').data('kendoGrid').dataItem($(this).closest("tr"));
+                listrowid += item.id + '@@@@';
+                listykien += item.noi_dung_xac_nhan_ton_kho + '@@@@';
+            }
+        });
+
+        if (listrowid != "" && listrowid != null) {
+            $.post(r + "/ApprovePR/XacNhanTonKho", { data: listrowid, note: txtNote, ykien: listykien }, function (data) {
+                if (data.success) {
+                    $.gritter.add({
+                        text: "Xác nhận thành công",
+                        class_name: 'gritter-success'
+                    });
+                    var ma_phieu = $("input[name='ma_phieu']").val();
+                    $("#grid").data("kendoGrid").dataSource.read();
+                    $("#gridDetail").data("kendoGrid").dataSource.read({ ma_phieu_header: ma_phieu });
+                    $('#popupXacNhanTonKho').modal('hide');
+                }
+                else {
+                    $.gritter.add({
+                        text: data.error,
+                        class_name: 'gritter-error'
+                    });
+                }
+            });
+        }
+    }
+</script>
+
+@*CNTT duyet chuyen mon*@
+<script>
+    function showPopupCNTT() {
+        var listrowid = "";
+        $('#gridDetail').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+
+            //$('textarea[name="txtCNTT]').val('');
+            $('#txtCNTT').val('');
+            $("#divMaskPopup").show();
+            $('#popupCNTT').modal('show');
+        }
+        else {
+            $.gritter.add({
+                text: "Vui lòng chọn sản phẩm để xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+        return;
+    }
+
+    function DuyetCMCNTT() {
+        var txtNote = $('textarea[name="txtCNTT"]').val();
+        if (txtNote == null || txtNote == '') {
+            $.gritter.add({
+                text: "Vui lòng nhập nội dung xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+
+        nhom_chuyen_mon = '@AllConstant.Y_KIEN_TTCN_NHDT';
+        note = txtNote;
+        $("#EditForm").submit();
+        //var listrowid = "";
+        //var listykien = "";
+        //$('#gridDetail').find(".checkrowid").each(function () {
+        //    if ($(this).prop('checked') == true) {
+        //        var item = $('#gridDetail').data('kendoGrid').dataItem($(this).closest("tr"));
+        //        listrowid += $(this).attr("id") + '@@@@';
+        //        listykien += item.noi_dung_xac_nhan_cap_3 + '@@@@';
+        //    }
+        //});
+
+        //if (listrowid != "" && listrowid != null) {
+        //    $.post(r + "/ApprovePR/DuyetCMCNTT", { data: listrowid, note: txtNote, ykien: listykien }, function (data) {
+        //        if (data.success) {
+        //            $.gritter.add({
+        //                text: "Xác nhận thành công",
+        //                class_name: 'gritter-success'
+        //            });
+        //            var ma_phieu = $("input[name='ma_phieu']").val();
+        //            $("#grid").data("kendoGrid").dataSource.read();
+        //            $('#gridDetail').data('kendoGrid').saveChanges();
+        //            //$("#gridDetail").data("kendoGrid").dataSource.read({ ma_phieu_header: ma_phieu });
+        //            // $("#gridDetail").data("kendoGrid").dataSource.read({ ma_phieu_header: ma_phieu });
+        //            $('#popupCNTT').modal('hide');
+        //        }
+        //        else {
+        //            $.gritter.add({
+        //                text: data.error,
+        //                class_name: 'gritter-error'
+        //            });
+        //        }
+        //    });
+        //}
+    }
+
+    function loadValidateUploadFile() {
+        $("#importForm").validate({
+            rules: {
+            },
+            errorPlacement: function (error, element) {
+            },
+            submitHandler: function (form) {
+                $("#importForm").ajaxSubmit({
+                    clearForm: false,
+                    success: function (data) {
+                        if (data.success) {
+                            $.gritter.add({
+                                text: "Thành công",
+                                class_name: 'gritter-success'
+                            });
+                            $("#gridHeader").data("kendoGrid").dataSource.read();
+                        } else {
+                            $.gritter.add({
+                                title: '',
+                                text: data.error,
+                                class_name: 'gritter-error'
+                            });
+                        }
+                    }
+                });
+            },
+        });
+    }
+</script>
+
+@*QLDVKH duyet chuyen mon*@
+<script>
+    function showPopupQLDVKH() {
+        debugger;
+        var listrowid = "";
+        $('#gridDetail').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+
+            //$('textarea[name="txtQLDVKH]').val('');
+            $("#txtQLDVKH").val('');
+            $("#divMaskPopup").show();
+            $('#popupQLDVKH').modal('show');
+        }
+        else {
+            $.gritter.add({
+                text: "Vui lòng chọn sản phẩm để xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+        return;
+    }
+
+    function DuyetCMQLDVKH() {
+        var txtNote = $('textarea[name="txtQLDVKH"]').val();
+        if (txtNote == null || txtNote == '') {
+            $.gritter.add({
+                text: "Vui lòng nhập nội dung xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+
+        nhom_chuyen_mon = '@AllConstant.Y_KIEN_QLDVKH_NQT';
+        note = txtNote;
+        $("#EditForm").submit();
+
+        //var listrowid = "";
+        //var listykien = "";
+        //$('#gridDetail').find(".checkrowid").each(function () {
+        //    if ($(this).prop('checked') == true) {
+        //        var item = $('#gridDetail').data('kendoGrid').dataItem($(this).closest("tr"));
+        //        listrowid += $(this).attr("id") + '@@@@';
+        //        listykien += item.noi_dung_xac_nhan_cap_3 + '@@@@';
+        //    }
+        //});
+
+
+        //if (listrowid != "" && listrowid != null) {
+        //    $.post(r + "/ApprovePR/DuyetCMQLDVKH", { data: listrowid, note: txtNote, ykien: listykien }, function (data) {
+        //        if (data.success) {
+        //            $.gritter.add({
+        //                text: "Xác nhận thành công",
+        //                class_name: 'gritter-success'
+        //            });
+        //            var ma_phieu = $("input[name='ma_phieu']").val();
+        //            $("#grid").data("kendoGrid").dataSource.read();
+        //            $('#gridDetail').data('kendoGrid').saveChanges();
+        //            //$("#gridDetail").data("kendoGrid").dataSource.read({ ma_phieu_header: ma_phieu });
+        //            $('#popupQLDVKH').modal('hide');
+        //        }
+        //        else {
+        //            $.gritter.add({
+        //                text: data.error,
+        //                class_name: 'gritter-error'
+        //            });
+        //        }
+        //    });
+        //}
+    }
+</script>
+
+@*HO duyet chuyen mon*@
+<script>
+    function showPopupHO() {
+        var listrowid = "";
+        $('#gridDetail').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+
+            //$('textarea[name="txtHO]').val('');
+            $('#txtHO').val('');
+            $("#divMaskPopup").show();
+            $('#popupHO').modal('show');
+        }
+        else {
+            $.gritter.add({
+                text: "Vui lòng chọn sản phẩm để xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+        return;
+    }
+
+    function DuyetCMHO() {
+        var txtNote = $('textarea[name="txtHO"]').val();
+        if (txtNote == null || txtNote == '') {
+            $.gritter.add({
+                text: "Vui lòng nhập nội dung xác nhận",
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+
+        nhom_chuyen_mon = '@AllConstant.Y_KIEN_KHAC_HO';
+        note = txtNote;
+        $("#EditForm").submit();
+
+        //var listrowid = "";
+        //var listykien = "";
+        //$('#gridDetail').find(".checkrowid").each(function () {
+        //    if ($(this).prop('checked') == true) {
+        //        var item = $('#gridDetail').data('kendoGrid').dataItem($(this).closest("tr"));
+        //        listrowid += $(this).attr("id") + '@@@@';
+        //        listykien += item.noi_dung_xac_nhan_cap_3 + '@@@@';
+        //    }
+        //});
+
+        //if (listrowid != "" && listrowid != null) {
+        //    $.post(r + "/ApprovePR/DuyetCMHO", { data: listrowid, note: txtNote, ykien: listykien }, function (data) {
+        //        if (data.success) {
+        //            $.gritter.add({
+        //                text: "Xác nhận thành công",
+        //                class_name: 'gritter-success'
+        //            });
+        //            var ma_phieu = $("input[name='ma_phieu']").val();
+        //            $('#gridDetail').data('kendoGrid').saveChanges();
+        //            $("#grid").data("kendoGrid").dataSource.read();
+        //            //$("#gridDetail").data("kendoGrid").dataSource.read({ ma_phieu_header: ma_phieu });
+        //            $('#popupHO').modal('hide');
+        //        }
+        //        else {
+        //            $.gritter.add({
+        //                text: data.error,
+        //                class_name: 'gritter-error'
+        //            });
+        //        }
+        //    });
+        //}
+    }
+    function getMaPhieu() {
+        return {
+            ma_phieu: ma_phieu_header
+        }
+    }
+</script>

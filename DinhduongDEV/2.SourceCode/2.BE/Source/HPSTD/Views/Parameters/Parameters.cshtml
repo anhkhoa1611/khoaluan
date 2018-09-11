@@ -1,0 +1,315 @@
+﻿@using HPSTD.Core.Entities
+@{
+    ViewBag.Title = "Dữ liệu dùng chung";
+}
+@{
+    var listActive = new List<SelectListItem>
+    {
+        new SelectListItem{Text = "Hoạt động", Value = "true"},
+        new SelectListItem{Text = "Ngưng hoạt động", Value = "false"},
+    };
+    ViewBag.listActive = listActive;
+    bool xem = ViewBag.accessDetail != null ? ViewBag.accessDetail.xem : false;
+    bool sua = ViewBag.accessDetail != null ? ViewBag.accessDetail.sua : false;
+    bool them = ViewBag.accessDetail != null ? ViewBag.accessDetail.them : false;
+    bool xoa = ViewBag.accessDetail != null ? ViewBag.accessDetail.xoa : false;
+    bool xuat = ViewBag.accessDetail != null ? ViewBag.accessDetail.xuat : false;
+    bool nhap = ViewBag.accessDetail != null ? ViewBag.accessDetail.nhap : false;
+}
+<style>
+    .k-alt .editable {
+        background-color: #C8E6C9;
+        color: black;
+    }
+
+    .editable {
+        background-color: #E8F5E9;
+        color: black;
+    }
+</style>
+
+<script src="~/Scripts/assets/js/select2.min.js"></script>
+<div class="row-fluid widget-box">
+
+    <div class="span12">
+        <input class="span3" type="text" id="txtSearch" placeholder="Mã, loại, giá trị tham số…" />
+        <select name="select" id="listStatus" class='chosen-select span3' data-placeholder="Hoạt động..." multiple>
+            <option value="true">Hoạt động </option>
+            <option value="false">Ngưng hoạt động </option>
+        </select>
+        <button type="button" id="btnSearch" class="btn btn-primary btn-small btnSearch" onclick="doSearch()" style="float:none">Lọc dữ liệu</button>
+    </div>
+</div>
+<div class="row-fluid">
+    <!-- NEW COL START -->
+    <article class="col-sm-12">
+        <div class="widget-body">
+            @(Html.Kendo().Grid<HPSTD.Core.Entities.Parameters>()
+            .Name("grid")
+            .Columns(columns =>
+            {
+                columns.Bound(p => p.id).HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAll'  onClick='checkAll(this)' />")
+                .ClientTemplate("<input style='text-align:center' class='checkrowid' type='checkbox' id='#=id#'  />").Width(30).Filterable(false).Sortable(false);
+                columns.Bound(p => p.ma_tham_so).Title("Mã tham số").Width(100).HtmlAttributes(new { @class = "editable" });
+                columns.Bound(p => p.loai_tham_so).Title("Loại tham số").Width(100).HtmlAttributes(new { @class = "editable" });
+                columns.Bound(p => p.gia_tri).Title("Giá trị").Width(250).HtmlAttributes(new { @class = "editable" });
+                
+                columns.ForeignKey(p => p.trang_thai, (System.Collections.IEnumerable)ViewBag.listActive, "Value", "Text").Title("Trạng thái").Width(120).EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { @class = "editable" });
+                columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                columns.Bound(p => p.nguoi_tao).Title("Người tạo").Filterable(false).Width(90);
+                columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Filterable(false).Width(90);
+            })
+            .ToolBar(toolBar =>
+            {
+                toolBar.Template(@<text>
+                    <div class="pull-left">
+                        @if (them)
+                        {
+                            <a class="btn btn-success btn-mini" href="javascript:void(0)" id="btnGridAdd" onclick="Create()">
+                                @*<i class="icon-plus"></i>*@ Thêm
+                            </a>
+                        }
+                        @if (them || sua)
+                        {
+                            <a class="btn btn-primary btn-mini" href="javascript:void(0)" id="btnGridSave" onclick="Update()">
+                                @*<i class="icon-plus"></i>*@ Lưu
+                            </a>
+                            <a class="btn btn-default btn-mini" href="javascript:void(0)" id="btnGridCancel" onclick="Cancel()">
+                                @*<i class="icon-plus"></i>*@ Hủy bỏ
+                            </a>
+                        }
+                        @if (xoa)
+                        {
+                            <a class="btn btn-danger btn-mini" href="javascript:void(0)" id="btnGridCancel" onclick="showConfirmPopup(1)">
+                                @*<i class="icon-plus"></i>*@ Xóa
+                            </a>
+                        }
+                    </div>
+                </text>);
+            })
+                .Events(events => { events.DataBound("onDatabound"); })
+                .Pageable(pager => pager.PageSizes(new[] { 20, 100, 200, 300 }))
+                .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                .Resizable(r => r.Columns(true))
+                .Editable(e => e.Mode(GridEditMode.InCell))
+                .Navigatable()
+                .Scrollable()
+                .Sortable()
+                .DataSource(dataSource => dataSource
+                    .Ajax()
+                    .Batch(true)
+                    .PageSize(100)
+                    .Sort(sort =>
+                    {
+                        sort.Add("loai_tham_so").Ascending();
+                    })
+                    .Events(e => { e.Error("error_handler"); e.RequestEnd("onRequestEnd"); })
+                    .Model(model =>
+                    {
+                        model.Id(p => p.id);
+                        model.Field(p => p.id).Editable(false);
+                        model.Field(p => p.trang_thai).DefaultValue("true");
+                        model.Field(p => p.ngay_cap_nhat).Editable(false);
+                        model.Field(p => p.ngay_tao).Editable(false);
+                        model.Field(p => p.nguoi_tao).Editable(false);
+                        model.Field(p => p.nguoi_cap_nhat).Editable(false);
+                    })                   
+                    .Read(read => read.Action("Read", "Parameters"))
+                    .Create(read => read.Action("Create", "Parameters"))
+                    .Update(read => read.Action("Update", "Parameters"))
+                )
+            )
+        </div>
+    </article>
+</div>
+
+<div id="popup-confirm" class="modal hide">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Thông báo</span>
+        @*<button type="button" class="btclose" data-dismiss="modal">&times;</button>*@
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <p>
+                <span id="txtcontent"></span>
+            </p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="onChangeStatus(1)">Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+<script>
+    function showConfirmPopup(e) {
+        var listrowid = "";
+        $('#grid').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+            if (e == 1) {
+                $('#popup-confirm').modal('show');
+                $('#txtcontent').html("Bạn chắc chắn xóa?");
+            }
+        }
+        else {
+            $.gritter.add({
+                title: '',
+                text: 'Vui lòng chọn dữ liệu để xóa',
+                class_name: 'gritter-error'
+            });
+        }
+    }
+    function onChangeStatus(type) {
+        var listrowid = "";
+        $('#grid').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+            $.post(r + "/Parameters/DeleteItem", { data: listrowid }, function (data) {
+                if (data.success) {
+                    $.gritter.add({
+                        text: 'Xóa dữ liệu thành công',
+                        class_name: 'gritter-success'
+                    });
+                    $("#grid").data("kendoGrid").dataSource.read();
+                    $('#checkboxcheckAll').prop('checked', false);
+                    onCloseForm();
+                }
+                else {
+                    $.gritter.add({
+                        title: '',
+                        text: data.alert,
+                        class_name: 'gritter-error'
+                    });
+                    $("#grid").data("kendoGrid").dataSource.read();
+                    $('#checkboxcheckAll').prop('checked', false);
+                    onCloseForm();
+                }
+            });
+        }
+    }
+
+    function onCloseForm() {
+        $('#txtcontent').val('');
+        $('.modal').modal('hide');
+    }
+    
+</script>
+<script>
+    $("#listStatus").chosen();
+    $(document).ready(function () {
+        $("#txtSearch").keypress(function (e) {
+            if (e.keyCode == 13) {
+                doSearch();
+            }
+        });
+    });
+    //search
+    function doSearch() {
+        var grid = $("#grid").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        var text = $("#txtSearch").val();
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "loai_tham_so", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ma_tham_so", operator: "contains", value: text });
+            filterOr.filters.push({ field: "gia_tri", operator: "contains", value: text });
+       
+            filter.filters.push(filterOr);
+        }
+        var listStatus = $("#listStatus option:selected");
+        var fillterStatus = { logic: "or", filters: [] };
+        if (listStatus.length > 0) {
+            for (var i = 0; i < listStatus.length; i++) {
+                var option = listStatus[i].value;
+                if (option == '') {
+                    fillterStatus.filters.push({ field: "trang_thai", operator: "contains", value: '' });
+                }
+                else {
+                    fillterStatus.filters.push({ field: "trang_thai", operator: "eq", value: option });
+                }
+            }
+            filter.filters.push(fillterStatus);
+        }
+        grid.dataSource.filter(filter);
+    }
+    //grid
+    function onDatabound(e) {
+        resizegrid();
+        var grid = $("#grid").data("kendoGrid");
+        var requestObject = (new kendo.data.transports["aspnetmvc-server"]({ prefix: "" }))
+        .options.parameterMap({
+            page: grid.dataSource.page(),
+            sort: grid.dataSource.sort(),
+            filter: grid.dataSource.filter()
+        });
+    }
+
+    function error_handler(e) {
+        if (e.errors) {
+            var message = "\n";
+            $.each(e.errors, function (key, value) {
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += this + "\n";
+                    });
+                }
+            });
+            $.gritter.add({
+                text: message,
+                class_name: 'gritter-error'
+            });
+            $("#grid").data("kendoGrid").dataSource.read()
+        }
+    }
+    function onRequestEnd(e) {
+        if (e.type == "update" || e.type == "create" || e.type == "delete") {
+            if (!e.response.Errors) {
+                $.gritter.add({
+                    title: '',
+                    text: 'Lưu dữ liệu thành công',
+                    class_name: 'gritter-success'
+                });
+                $("#grid").data("kendoGrid").dataSource.read()
+            }
+
+        }
+    }
+    function resizegrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+        dataArea = gridElement.find(".k-grid-content"),
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 25);
+    }
+
+    // BaoHV add
+    function Update() {
+        if ($('#grid').data('kendoGrid').dataSource.hasChanges() == true) {
+            $('#grid').data('kendoGrid').saveChanges();
+        }
+    }
+    function Create() {
+        $("#grid").data("kendoGrid").dataSource.insert();
+    }
+    function Cancel() {
+        $('#grid').data('kendoGrid').cancelChanges();
+    }
+    function checkAll(e) {
+        var x = $(e).prop('checked');
+        $('#grid').find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+</script>
+

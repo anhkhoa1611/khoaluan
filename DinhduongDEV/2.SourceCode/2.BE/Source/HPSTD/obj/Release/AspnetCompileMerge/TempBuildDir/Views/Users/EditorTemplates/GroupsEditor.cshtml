@@ -1,0 +1,7 @@
+﻿@model IEnumerable<HDBank.Models.GroupViewModel>
+@(
+ Html.Kendo().MultiSelectFor(m => m)
+        .DataTextField("Name")
+        .DataValueField("Id")
+        .BindTo((IEnumerable<HDBank.Models.GroupViewModel>)ViewData["listGroup"])
+)

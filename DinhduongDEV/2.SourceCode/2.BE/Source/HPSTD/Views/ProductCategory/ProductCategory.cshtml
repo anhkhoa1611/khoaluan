@@ -1,0 +1,623 @@
+﻿@using HPSTD.Core.Entities
+@{
+    bool xem = ViewBag.accessDetail != null ? ViewBag.accessDetail.xem : false;
+    bool sua = ViewBag.accessDetail != null ? ViewBag.accessDetail.sua : false;
+    bool them = ViewBag.accessDetail != null ? ViewBag.accessDetail.them : false;
+    bool xoa = ViewBag.accessDetail != null ? ViewBag.accessDetail.xoa : false;
+    bool xuat = ViewBag.accessDetail != null ? ViewBag.accessDetail.xuat : false;
+    bool nhap = ViewBag.accessDetail != null ? ViewBag.accessDetail.nhap : false;
+
+
+    ViewBag.Title = "Nhóm hàng hóa dịch vụ";
+    var newData = new ProductCategory();
+    var listActive = new List<SelectListItem>
+    {
+        new SelectListItem{Text = "Hoạt động", Value = "true"},
+        new SelectListItem{Text = "Ngưng hoạt động", Value = "false"},
+    };
+    ViewBag.listActive = listActive;
+}
+<style>
+    .form-actions {
+        background: 0 0 !important;
+        padding: 19px 10px !important;
+    }
+
+        .form-actions.right {
+            text-align: right !important;
+        }
+
+    .k-alt .editable {
+        background-color: #C8E6C9;
+        color: black;
+    }
+
+    .editable {
+        background-color: #E8F5E9;
+        color: black;
+    }
+</style>
+<script src="~/Scripts/autoNumeric-min.js"></script>
+<script src="~/Scripts/jquery.validate.js"></script>
+
+<div class="row-fluid widget-box">
+    <div class="span12">
+        <input type="text" id="txtSearch" class="span3" placeholder="Mã, tên nhóm hàng hóa dịch vụ" onkeyup="filter()" />
+        <select name="select" id="listStatus" class='chosen-select span3' data-placeholder="Trạng thái..." multiple onchange="filter()">
+            <option value="true">Đang hoạt động </option>
+            <option value="false">Không hoạt động </option>
+        </select>
+
+    </div>
+</div>
+<div class="row-fluid">
+    @(Html.Kendo()
+    .Grid<HPSTD.Core.Entities.ProductCategory>()
+    .Name("grid")
+    .Columns(columns =>
+    {
+        columns.Bound(p => p.id)
+            .HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllDetail'  onClick='checkAllDetail(this)' />")
+            .ClientTemplate("<input style='text-align:center' class='checkdetailid' type='checkbox' id='#=id#'/> ")
+            .Width(25).Filterable(false).Sortable(false);
+        //columns.Bound(p => p.ma_phan_cap).Width(90).Title("Mã nhóm").ClientTemplate("<span style='cursor:pointer; color:\\#428bca' onclick='edit(this)'>#=ma_phan_cap#</span>").HtmlAttributes(new { @class = "editable" });
+        columns.Bound(p => p.ma_phan_cap).Width(90).Title("Mã nhóm").HtmlAttributes(new { @class = "editable" });
+        columns.Bound(p => p.ten_phan_cap).Width(400).Title("Tên nhóm hàng hóa-dịch vụ").HtmlAttributes(new { @class = "editable" });
+        columns.ForeignKey(p => p.ma_phan_cap_cha, (System.Collections.IEnumerable)ViewBag.listAll, "ma_phan_cap", "ten_phan_cap").EditorTemplateName("GridNullableForeignKey").Title("Nhóm quản lý").Width(160).HtmlAttributes(new { @class = "editable" });
+        columns.Bound(p => p.cap).Width(50).Title("Cấp").HtmlAttributes(new { style = "text-align:right" }).Format("{0:N0}").HtmlAttributes(new { @class = "editable" });
+        columns.ForeignKey(p => p.trang_thai, (System.Collections.IEnumerable)ViewBag.listActive, "Value", "Text").Title("Trạng thái").Width(120).EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { @class = "editable" });
+        // columns.Bound(p => p.trang_thai).Width(120).Title("Trạng thái").ClientTemplate("#if(trang_thai){#Đang hoạt động#}else{#Ngưng hoạt động#}#").HtmlAttributes(new { @class = "editable" });
+        columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+        columns.Bound(p => p.nguoi_tao).Title("Người tạo").Filterable(false).Width(90);
+        columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+        columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Filterable(false).Width(90);
+    })
+    .ToolBar(s =>
+    {
+        if (them)
+        {
+            s.Custom().Text("Thêm")
+            .HtmlAttributes(new { @class = "btn btn-success", @Href = "javascript:void(0)", @onclick = "Create()" });
+        }
+        if (them || sua)
+        {
+            s.Custom().Text("Lưu")
+            .HtmlAttributes(new { @class = "btn btn-primary", @Href = "javascript:void(0)", @onclick = "Save()" });
+            s.Custom().Text("Hủy")
+            .HtmlAttributes(new { @class = "btn btn-default", @Href = "javascript:void(0)", @onclick = "Cancel()" });
+        }
+        if (xoa)
+        {
+            s.Custom().Text("Xóa")
+            .HtmlAttributes(new { @class = "btn btn-danger", @Href = "javascript:void(0)", @onclick = "showConfirmPopup(1)" });
+        }      
+        if (nhap)
+        {
+            s.Custom().Text("Tải Excel mẫu").HtmlAttributes(new { @class = "btn btn-primary" }).Url(Url.Action("ExportTeamplate", "ProductCategory"));
+            s.Custom().Text("Nhập dữ liệu")
+            .HtmlAttributes(new { @class = "btn btn-primary", @Href = "javascript:void(0)", @onclick = "showConfirmPopupImport()" });
+        }
+        if (xuat)
+        {
+            s.Excel().Text("Xuất dữ liệu");
+        }
+    })
+    .Editable(editable => editable.Mode(GridEditMode.InCell))
+    .Sortable()
+    .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+    .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+    .Pageable(p => p
+        .Messages(m => m
+            .Display("{0}-{1} của {2} dòng")
+            .Empty("Không có dòng nào")
+            .ItemsPerPage("dòng trên trang")
+            .First("Trang kế")
+            .Last("Trang tiếp")
+            .Next("Đầu trang")
+            .Previous("Cuối trang")
+        )
+    )
+    .Scrollable()
+    .Events(e => { e.DataBound("Databound"); })
+    .Navigatable()
+    .Resizable(r => r.Columns(true))
+    .Excel(excel => excel.FileName("ProductCategoryList.xlsx")
+    .Filterable(true).AllPages(true)
+    .ProxyURL(Url.Action("Excel_Export", "Users")))
+    .Reorderable(r => r.Columns(true))
+    .Resizable(r => r.Columns(true))
+    .DataSource(dataSource => dataSource
+        .Ajax()
+        .Sort(s =>
+        {
+            s.Add("ma_phan_cap");
+        })
+        .Batch(true)
+        .PageSize(20)
+        .Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+    .Model(model =>
+    {
+        model.Id(p => p.id);
+        model.Field(p => p.id).Editable(false);
+        model.Field(p => p.trang_thai).DefaultValue("true");
+        model.Field(p => p.ngay_cap_nhat).Editable(false);
+        model.Field(p => p.ngay_tao).Editable(false);
+        model.Field(p => p.nguoi_tao).Editable(false);
+        model.Field(p => p.nguoi_cap_nhat).Editable(false);
+    })
+
+    .Read(read => read.Action("Read", "ProductCategory"))
+    .Create(read => read.Action("Create", "ProductCategory"))
+    .Update(read => read.Action("Update", "ProductCategory"))
+    ))
+</div>
+
+@*<div class="row-fluid">
+        <div class="span12">
+            <div class="row-fluid">
+                <div class="col-sm-6">
+                    <div class="tabbable">
+                        <ul class="nav nav-tabs tab-color-blue" id="myTab">
+                            <li class="active">
+                                <a data-toggle="tab" href="#home" aria-expanded="true" id="tabList">
+                                    Danh sách nhóm hàng hóa dịch vụ
+                                </a>
+                            </li>
+                            <li class="">
+                                <a data-toggle="tab" href="#edit" aria-expanded="false" id="tabAdd">
+                                    Thêm nhóm hàng hóa dịch vụ
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" style="padding-bottom:0px!important">
+                            <div id="home" class="tab-pane fade active in">
+                                    Thêm nội dung tab ở đây
+                            </div>
+                            <div id="edit" class="tab-pane fade">
+                                <div class="span12 formEdit">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>*@
+<div id="popup-import" class="modal hide">
+    <form action="~/ProductCategory/Import" method="post" id="importForm" enctype="multipart/form-data" class="form-inline" style="margin:0px">
+        <div class="k-window-titlebar k-header">
+            <span class="k-window-title">Thông báo</span>
+            @*<button type="button" class="btclose" data-dismiss="modal">&times;</button>*@
+        </div>
+        <div class="modal-body overflow-visible">
+            <div class="row-fluid form-horizontal">
+                <input name="FileUpload" type="file" id="FileUpload" />
+                <label>Chọn file </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a class="btn btn-info btn-small" onclick="Import()"> Đồng ý</a>
+            <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+        </div>
+    </form>
+</div>
+<script type="text/template" id="EditTemplate">
+    <form action="@Url.Content("~/ProductCategory/CreateUpdate")" id="EditForm" method="post" enctype="multipart/form-data">
+        <div class="row-fluid">
+            <div class="span6">
+                <input type="hidden" name="id" value="#=id#" />
+                <div class="control-group">
+                    <label>Mã nhóm vật tư (*)</label>
+                    <div class="controls">
+                        #if(id > 0){#
+                        <input type="text" class="span12" placeholder="Mã nhóm vật tư" name="ma_phan_cap" value="#=ma_phan_cap!=null ? ma_phan_cap : ''#">
+                        #}else{#
+                        <input type="text" class="span12" placeholder="Mã nhóm vật tư" name="ma_phan_cap" value="#=ma_phan_cap!=null ? ma_phan_cap : ''#">
+                        #}#
+                    </div>
+                </div>
+            </div>
+            <div class="span6">
+
+                <div class="control-group">
+                    <label>Tên nhóm vật tư (*)</label>
+                    <div class="controls">
+                        <input type="text" class="span12" placeholder="Tên nhóm vật tư" name="ten_phan_cap" value="#=ten_phan_cap!=null ? ten_phan_cap : ''#">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span4">
+                <div class="control-group">
+                    <label>Mã nhóm vật tư cha</label>
+                    <div class="controls">
+                        @(Html.Kendo().DropDownList()
+                        .Name("ma_phan_cap_cha")
+                        .DataTextField("ten_phan_cap")
+                        .DataValueField("ma_phan_cap")
+                        .HtmlAttributes(new { @style = "width:100%;" })
+                        .Filter("contains")
+                        .OptionLabel("--Chọn nhóm  vật tư cha--")
+                        .Value("#=ma_phan_cap_cha !=null ? ma_phan_cap_cha: ''#")
+                        .BindTo(ViewBag.listAll)
+                        .ToClientTemplate()
+                        )
+                    </div>
+                </div>
+                @*<div class="control-group">
+                        <label>Mã nhóm vật tư cha </label>
+                        <div class="controls">
+                            <input type="text" class="span12" placeholder="Mã nhóm vật tư cha" name="ma_phan_cap_cha" value="#=ma_phan_cap_cha!=null ? ma_phan_cap_cha : ''#">
+                        </div>
+                    </div>*@
+            </div>
+            <div class="span4">
+                <div class="control-group">
+                    <label>Cấp </label>
+                    <div class="controls">
+                        <input type="text" class="span12" placeholder="Cấp" name="cap" value="#=cap!=null ? cap : ''#">
+                    </div>
+                </div>
+            </div>
+            <div class="span4">
+                <div class="control-group">
+                    <label>Trạng thái</label>
+                    <div class="controls">
+                        <div class="controls">
+                            <select name="trang_thai" class="span12">
+                                #if(!trang_thai){#
+                                <option value="true">Đang hoạt động</option>
+                                <option value="false" selected>Ngừng hoạt động</option>
+                                #}else{#
+                                <option value="true" selected>Đang hoạt động</option>
+                                <option value="false">Ngừng hoạt động</option>
+                                #}#
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions right">
+            <a onclick="clearForm()" class="btn btn-xs">Hủy</a>
+            #if(id > 0){#
+            <a onclick="removeUser('#=id#')" class="btn btn-danger">Xóa</a>
+            #}#
+            <button type="submit" class="btn btn-info">Lưu</button>
+            <a onclick="saveAndClear()" class="btn btn-primary">Lưu &amp; Mới</a>
+        </div>
+
+    </form>
+</script>
+
+<div id="popup-confirm" class="modal hide">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Thông báo</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <p>
+                <span>Bạn có chắc chắn muốn xóa nhóm hàng hóa dịch vụ này?</span>
+            </p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="Delete()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+<script>
+    $("#listStatus").chosen();
+
+    function showConfirmPopup(e) {
+        if (e == 1) {
+            var listrowid = "";
+            $('#grid').find(".checkdetailid").each(function () {
+                if ($(this).prop('checked') == true) {
+                    listrowid += $(this).attr("id") + '@@@@';
+                }
+            });
+            if (listrowid != "" && listrowid != null) {
+                deleteId = 1;
+                $("#divMaskPopup").show();
+                $('#popup-confirm').modal('show');
+            }
+            else {
+                $.gritter.add({
+                    title: '',
+                    text: 'Vui lòng chọn dữ liệu muốn xóa',
+                    class_name: 'gritter-error'
+                });
+            }
+        }
+    }
+    function Delete() {
+        if (deleteId == 1) {
+            var listrowid = "";
+            $('#grid').find(".checkdetailid").each(function () {
+                if ($(this).prop('checked') == true) {
+                    listrowid += $(this).attr("id") + '@@@@';
+                }
+            });
+            if (listrowid != "" && listrowid != null) {
+                $.post(r + "/ProductCategory/DeleteList", { data: listrowid }, function (data) {
+                    if (data.success) {
+                        $.gritter.add({
+                            text: "Xóa nhóm hàng hóa dịch vụ thành công",
+                            class_name: 'gritter-success'
+                        });
+                        $("#grid").data("kendoGrid").dataSource.read();
+                    }
+                    else {
+                        $.gritter.add({
+                            text: data.error,
+                            class_name: 'gritter-error'
+                        });
+                    }
+                    $('#popup-confirm').modal('hide');
+                });
+            }
+        }
+        else {
+        }
+    }
+    function checkAllDetail(e) {
+        var x = $(e).prop('checked');
+        $("#grid").find(".checkdetailid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+    function loadForm(data) {
+        var EditTemplate = kendo.template($("#EditTemplate").html());
+        $(".formEdit").html(EditTemplate(data));
+        loadValidate(data);
+        initPlugins();
+    }
+    function loadValidate() {
+        $("#EditForm").validate({
+            rules: {
+                'ma_phan_cap': { required: true },
+                'ten_phan_cap': { required: true },
+            },
+            errorPlacement: function (error, element) {
+            },
+            submitHandler: function (form) {
+                $(form).ajaxSubmit({
+                    clearForm: false,
+                    success: function (data) {
+                        if (data.success) {
+                            $("#grid").data("kendoGrid").dataSource.read()
+                            $.gritter.add({
+                                text: "Lưu dữ liệu thành công",
+                                class_name: 'gritter-success'
+                            });
+                            if (reset) {
+                                reset = false;
+                                loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+                            }
+                        }
+                        else {
+                            $.gritter.add({
+                                text: data.error,
+                                class_name: 'gritter-error'
+                            });
+                        }
+
+                    }
+                });
+                return false;
+            }
+        });
+    }
+    function edit(e) {
+        var data = $("#grid").data("kendoGrid").dataItem($(e).closest("tr"));
+        $("#tabAdd").trigger("click");
+        $('#tabAdd').text('').append('Chỉnh sửa nhóm hàng hóa dịch vụ')
+        loadForm(data);
+    }
+    $("#tabList").bind('click', function () {
+        $('#tabAdd').text('').append('Thêm nhóm hàng hóa dịch vụ')
+    });
+    $("#tabAdd").bind('click', function () {
+        loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+    });
+    var reset = false;
+    function saveAndClear() {
+        reset = true;
+        $('#EditForm').submit();
+    }
+    function initPlugins() {
+        $("input[name='cap']").autoNumeric("init", {
+            aSep: ',',
+            aPad: false,
+            lZero: 'deny'
+        });
+    }
+    var Id;
+    function removeUser(id) {
+        $('#popup-confirm').modal('show');
+        Id = id;
+    }
+
+    function Databound() {
+        resizeGrid();
+    }
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+        dataArea = gridElement.find(".k-grid-content"),
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 25);
+    }
+    function filter() {
+        grid = $("#grid").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        var text = $("#txtSearch").val();
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "ma_phan_cap", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ten_phan_cap", operator: "contains", value: text });
+            filter.filters.push(filterOr);
+        }
+
+        var listStatus = $("#listStatus option:selected");
+        var fillterStatus = { logic: "or", filters: [] };
+        if (listStatus.length > 0) {
+            for (var i = 0; i < listStatus.length; i++) {
+                var option = listStatus[i].value;
+                if (option != '') {
+                    fillterStatus.filters.push({ field: "trang_thai", operator: "eq", value: option });
+                }
+            }
+            filter.filters.push(fillterStatus);
+        }
+        grid.dataSource.filter(filter);
+        console.log(text)
+    }
+</script>
+
+@* Import *@
+<script>
+    $(document).ready(function () {
+        $('#FileUpload').ace_file_input({
+            no_file: 'Chưa chọn tập tin ...',
+            btn_choose: 'Chọn',
+            btn_change: 'Thay đổi',
+            droppable: false,
+            onchange: null,
+            thumbnail: false, //| true | large
+            allowExt: ['gif', 'png', 'jpg', 'jpeg', 'xlsx', 'xls', 'doc', 'docx', 'pdf'],
+            denyExt: ['exe', 'php'],
+            maxSize: 5120000,
+            //onchange:''
+            before_change: function (files, dropped) {
+                var allowed_files = [];
+                for (var i = 0 ; i < files.length; i++) {
+                    var file = files[i];
+                    if (typeof file === "string") {
+                        //IE8 and browsers that don't support File Object
+                        if (!(/\.(xlsx|xls)$/i).test(file))
+                            //if (!(/\.(jpe?g|png|gif|bmp|doc|docx|xlsx|xls|pdf)$/i).test(file))
+                            return false;
+                    }
+                    else {
+                        var type = $.trim(file.type);
+                        var isValidLength = type.length > 0;
+                        var isApplication = (/^application\/(pdf|msword|vnd.openxmlformats-officedocument.spreadsheetml.sheet)$/i).test(type);
+                        //var isValidFileName = (/\.(jpe?g|png|gif|bmp|doc|docx|xlsx|xls|pdf)$/i).test(file.name);
+                        var isValidFileName = (/\.(xlsx|xls)$/i).test(file.name);
+                        //var isImage = (/^image\/(jpe?g|png|gif|bmp)$/i).test(type);
+                        if (isValidLength) {
+                            if (!isApplication && !isValidFileName) {
+                                alert('Sai định dạng file(*.xlsx,*.xls): ' + file.name);
+                                continue;
+                            }
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    allowed_files.push(file);
+                }
+                if (allowed_files.length === 0) return false;
+                return allowed_files;
+            }
+        });
+    });
+    function Create() {
+        $("#grid").data("kendoGrid").dataSource.insert();
+    }
+    function Save() {
+        if ($('#grid').data('kendoGrid').dataSource.hasChanges() == true) {
+            $('#grid').data('kendoGrid').saveChanges();
+        }
+    }
+    function Cancel() {
+        $("#grid").data("kendoGrid").dataSource.cancelChanges();
+    }
+
+    function error_handler(e) {
+        if (e.errors) {
+            var message = "\n";
+            $.each(e.errors, function (key, value) {
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += this + "\n";
+                    });
+                }
+            });
+            $.gritter.add({
+                text: message,
+                class_name: 'gritter-error'
+            });
+        }
+    }
+    function onRequestEnd(e) {
+        if (e.type == "update" || e.type == "create" || e.type == "delete") {
+            if (!e.response.Errors) {
+                $.gritter.add({
+                    title: '',
+                    text: 'Lưu dữ liệu thành công',
+                    class_name: 'gritter-success'
+                });
+                $("#grid").data("kendoGrid").dataSource.read()
+            }
+
+        }
+    }
+    function Import() {
+        $('#importForm').submit();
+    }
+    function showConfirmPopupImport(e) {
+        $('#popup-import').modal('show');
+    }
+
+    function onCloseForm() {
+        $('#txtcontent').val('');
+        $('.modal').modal('hide');
+    }
+    $("#importForm").validate({
+        submitHandler: function (form) {
+            $("#importForm").ajaxSubmit({
+                uploadProgress: function (event, position, total, percentComplete) { },
+                success: function (data) {
+                    if (data.success) {
+                        $("#grid").data("kendoGrid").dataSource.read();
+                        if (data.totalError > 0) {
+                            $.gritter.add({
+                                title: 'Lỗi',
+                                text: "Có dòng lỗi, tải về để sửa lại.",
+                                class_name: 'gritter-error'
+                            });
+                            window.open(r + "/ExcelImport/" + data.link, "_blank");
+                        }
+                        else {
+                            $.gritter.add({
+                                title: '',
+                                text: "Nhập thành công " + data.total + " trang",
+                                class_name: 'gritter-success',
+                                button: 'zzz'
+                            });
+                        }
+                        $('#FileUpload').ace_file_input('reset_input');
+                    } else {
+                        $.gritter.add({
+                            title: '',
+                            text: "Báo lỗi " + data.message,
+                            class_name: 'gritter-error',
+                            button: 'zzz'
+                        });
+                    }
+                    onCloseForm();
+                }
+            });
+        },
+    });
+</script>

@@ -1,0 +1,10 @@
+﻿@model object
+
+@(
+ Html.Kendo().DropDownListFor(m => m)
+        .OptionLabel("- Chọn -")
+        .Filter("startswith")
+        .DataTextField("Text")
+        .DataValueField("Value")
+        .BindTo((SelectList)ViewData[ViewData.TemplateInfo.GetFullHtmlFieldName("") + "_Data"])
+)

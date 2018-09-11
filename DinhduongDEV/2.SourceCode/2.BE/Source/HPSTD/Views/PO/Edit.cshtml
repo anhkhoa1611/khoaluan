@@ -1,0 +1,583 @@
+﻿@model POHeader
+@using HDBank.Core.Entities
+@{
+    ViewBag.Title = "Sửa đơn đặt hàng";
+    var newdata = new POHeader();
+}
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+<form action="@Url.Content("~/PO/Update")" id="EditForm" method="post" enctype="multipart/form-data">
+    <div class="row-fluid">
+        <div class="span2">
+            <input type="hidden" name="id" value="@Model.id" />
+            <div class="control-group">
+                <label>Số phiếu (*)</label>
+                <div class="controls">
+                    <input type="text" class="span12" placeholder="Số phiếu" name="ma_phieu" id="ma_phieu" readonly>
+                </div>
+            </div>
+        </div>
+        @*<div class="span2">
+            <div class="control-group">
+                <label>Tên phiếu (*)</label>
+                <div class="controls">
+                    <input type="text" class="span12" placeholder="Tên phiếu" name="ten_phieu" id="ten_phieu">
+                </div>
+            </div>
+        </div>*@
+        <div class="span2">
+            <div class="control-group">
+                <label>Nhà cung cấp(*)</label>
+                @(Html.Kendo().DropDownList()
+                .Name("ma_nha_cung_cap")
+                .DataTextField("ten_nha_cung_cap")
+                .DataValueField("nha_cung_cap_id")
+                .HtmlAttributes(new { @style = "width:100%;" })
+                .Filter("contains")
+                .OptionLabel("NCC")
+                .BindTo(ViewBag.Vendor)
+                )
+            </div>
+        </div>
+    </div>
+
+    <div class="row-fluid">
+        @(Html.Kendo()
+        .Grid<HDBank.Core.Entities.PODetail>()
+        .Name("grid")
+        .Columns(columns =>
+        {
+        columns.Bound(p => p.id).Hidden();
+        //.HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAll'  onClick='checkAll(this)' />")
+        //.ClientTemplate("<input style='text-align:center' class='checkrowid' type='checkbox' id='#=id#'/> ")
+        //.Width(25).Filterable(false).Title("").Sortable(false);
+        //columns.Bound(p => p.ma_phieu_header).Width(90).Title("Mã phiếu");
+        //columns.Bound(p => p.ma_san_pham).Width(90).Title("Mã sản phẩm");
+            if(ViewBag.POHeader.trang_thai != "DA_DUYET")
+            {
+                columns.Template(@<text></text>).HeaderHtmlAttributes(new { @style = "text-align: center" })
+                .ClientTemplate("<span><a class='btn btn-mini btn-danger' onclick='removeDetail(#=id#)'><i class='fa fa-trash'></i></a></span>").Width(45);
+            }
+            columns.ForeignKey(p => p.ma_san_pham, (System.Collections.IEnumerable)ViewBag.listProduct, "ma_san_pham", "ten_san_pham")
+            .Title("Tên vật tư").Width(160);
+            columns.Bound(p => p.so_luong).Title("SL").Filterable(false).Width(75).Format("{0:N0}").HtmlAttributes(new { @style = "text-align:right", columnname = "so_luong" });
+            columns.Bound(p => p.don_gia).Title("Đơn giá").Filterable(false).Width(100).Format("{0:N0}").HtmlAttributes(new { @style = "text-align:right", columnname = "don_gia" });
+            columns.Bound(p => p.don_gia_vat).Title("Đơn giá VAT").Filterable(false).Width(100).Format("{0:N0}").HtmlAttributes(new { @style = "text-align:right", columnname = "don_gia_vat" });
+            columns.Bound(p => p.don_vi_tinh).Title("Đơn vi tính").Filterable(false).Hidden();
+            columns.Bound(p => p.thue_vat).Title("VAT").Filterable(false).Hidden();
+            columns.Bound(p => p.ma_don_vi).Title("Đơn Vị").Filterable(false).Hidden();
+            columns.Bound(p => p.ma_chi_nhanh).Title("Chi Nhánh").Filterable(false).Hidden();
+            columns.Bound(p => p.chi_phi).Title("Chi phí(VAT)").Filterable(false).Width(100).Format("{0:N0}").HtmlAttributes(new { @style = "text-align:right", columnname = "chi_phi" });
+            columns.Bound(p => p.dia_chi_don_vi).Title("Địa chỉ đơn Vị").Width(150);
+            columns.Bound(p => p.thong_tin_noi_bo).Title("Thông tin nội bộ").Width(150);
+            //columns.Bound(p => p.thong_so_ky_thuat).Title("Thông tin kỹ thuật").Filterable(false).Width(220);
+            //columns.Bound(p => p.muc_dich_su_dung).Title("Mục đích sử dụng").Filterable(false).Width(180);
+            //columns.ForeignKey(p => p.ma_don_vi, (System.Collections.IEnumerable)ViewBag.listDonVi, "ma_phan_cap", "ten_phan_cap")
+            //.Title("Đơn vị").Width(160);
+            columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { @style = "text-align:right", columnname = "ngay_tao" });
+            columns.Bound(p => p.nguoi_tao).Title("Người tạo").Filterable(false).Width(90);
+            columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { @style = "text-align:right", columnname = "ngay_sua" });
+            columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Filterable(false).Width(90);
+        })
+            .ToolBar(toolbar =>
+            {
+            toolbar.Template(@<text>
+            @if (ViewBag.POHeader.trang_thai != "DA_DUYET")
+            {
+                <div class="pull-left">
+                    <a class="btn btn-info btn-mini" href="javascript:void(0)" onclick="Save()">
+                        Lưu
+                    </a>
+                </div>
+                <div class="pull-left">
+                    <a class="btn btn-danger btn-mini" href="javascript:void(0)" onclick="OpenPopup()">
+                        Thêm chi tiết
+                    </a>
+                </div>
+            }
+            <div class="pull-left">
+                <a class="btn btn-primary btn-mini" href="javascript:void(0)" onclick="review('print')">
+                    In phiếu
+                </a>
+            </div>
+            @if (Model.trang_thai == AllConstant.TRANGTHAI_MOI)
+            {
+                <div class="pull-left">
+                    <a class="btn btn-warning btn-mini" href="javascript:void(0)" onclick="showApprove()" id="btnApprove">
+                        Duyệt
+                    </a>
+                </div>
+            }
+            </text>);
+            })
+                .Sortable()
+                .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+                .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                .Pageable(p => p
+                .Messages(m => m
+                .Display("{0}-{1} của {2} dòng")
+                .Empty("Không có dòng nào")
+                .ItemsPerPage("dòng trên trang")
+                .First("Trang kế")
+                .Last("Trang tiếp")
+                .Next("Đầu trang")
+                .Previous("Cuối trang")
+                )
+                )
+                .Scrollable()
+                .Events(e =>
+                {
+                    e.DataBound("Databound");
+                })
+                .Editable(edit => edit.Mode(GridEditMode.InCell))
+                .Navigatable()
+                .Reorderable(r => r.Columns(true))
+                .Resizable(r => r.Columns(true))
+                .DataSource(dataSource => dataSource
+                .Ajax()
+                .PageSize(20)
+                //.Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+                .Model(model =>
+                {
+                    if (ViewBag.POHeader.trang_thai != "DA_DUYET")
+                    {
+                        model.Id(p => p.id);
+                        model.Field(m => m.ma_san_pham).Editable(false);
+                        model.Field(m => m.so_luong).Editable(false);
+                        model.Field(m => m.don_gia).Editable(false);
+                        model.Field(m => m.don_gia_vat).Editable(false);
+                        model.Field(m => m.chi_phi).Editable(false);
+                        model.Field(m => m.thong_tin_noi_bo).Editable(true);
+                        model.Field(m => m.thong_so_ky_thuat).Editable(true);
+                        model.Field(m => m.muc_dich_su_dung).Editable(true);
+                        model.Field(m => m.nguoi_tao).Editable(false);
+                        model.Field(m => m.ngay_tao).Editable(false);
+                        model.Field(m => m.ngay_cap_nhat).Editable(false);
+                        model.Field(m => m.nguoi_cap_nhat).Editable(false);
+                        model.Field(m => m.dia_chi_don_vi).Editable(false);
+                    }
+                    else
+                    {
+                        model.Id(p => p.id);
+                        model.Field(m => m.ma_san_pham).Editable(false);
+                        model.Field(m => m.so_luong).Editable(false);
+                        model.Field(m => m.thong_so_ky_thuat).Editable(false);
+                        model.Field(m => m.don_gia).Editable(false);
+                        model.Field(m => m.don_gia_vat).Editable(false);
+                        model.Field(m => m.chi_phi).Editable(false);
+                        model.Field(m => m.muc_dich_su_dung).Editable(false);
+                        model.Field(m => m.nguoi_tao).Editable(false);
+                        model.Field(m => m.ngay_tao).Editable(false);
+                        model.Field(m => m.ngay_cap_nhat).Editable(false);
+                        model.Field(m => m.nguoi_cap_nhat).Editable(false);
+                    }
+
+
+                })
+                .Read(read => read.Action("ReadDetail", "PO", new { @ma_phieu_header = Model.ma_phieu }))
+                ))
+        <br />
+    </div>
+
+</form>
+
+<div id="popup-confirm" class="modal hide">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Thông báo</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <p>
+                <span>Bạn có chắc chắn muốn xóa dữ liệu</span>
+            </p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="DeleteDetail()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+<script type="text/x-kendo-template" id="EditTemplate">
+
+
+</script>
+
+<div id="DetailPopup" class="modal hide" tabindex="-1">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title" id="titlePopupDetail">Thêm</span>
+    </div>
+    <div class="row-fluid">
+        <div class="row-fluid">
+            <div class="span12">
+                <input type="text" class="span2 date-picker" placeholder="Từ ngày" name="from_date" id="from_date">
+                <input type="text" class="span2 date-picker" placeholder="Đến ngày" name="to_date" id="to_date">
+                <button type="button" id="btnSearch" class="btn btn-primary btn-small btnSearch" onclick="doSearchpopup()" style="float:none">Lọc dữ liệu</button>
+            </div>
+        </div>
+    </div>
+    <div class="row-fluid">
+        @(Html.Kendo()
+            .Grid<HDBank.Core.Entities.StatementDetail>
+                ()
+                .Name("gridDetail")
+                .Columns(columns =>
+                {
+                    columns.Bound(p => p.id)
+                    .HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAll'  onClick='checkAll(this)' />")
+                    .ClientTemplate("<input style='text-align:center' class='checkrowid' type='checkbox' id='#=id#'/> ")
+                    .Width(25).Filterable(false).Title("").Sortable(false);
+                    //columns.Bound(p => p.ma_phieu_header).Width(90).Title("Mã phiếu");
+                    columns.ForeignKey(p => p.ma_phieu_header, (System.Collections.IEnumerable)ViewBag.StatementHeader, "ma_phieu", "ma_phieu")
+                    .Title("Mã phiếu").Width(160);
+                    //columns.Bound(p => p.ma_san_pham).Width(90).Title("Mã sản phẩm");
+                    columns.ForeignKey(p => p.ma_san_pham, (System.Collections.IEnumerable)ViewBag.listProduct, "ma_san_pham", "ten_san_pham")
+                    .Title("Tên vật tư").Width(160);
+                    columns.Bound(p => p.so_luong).Title("SL").Filterable(false).Width(75).Format("{0:N0}").HtmlAttributes(new { @style = "text-align:right", columnname = "SL" });
+                    columns.Bound(p => p.thong_so_ky_thuat).Title("Thông tin kỹ thuật").Filterable(false).Width(220);
+                    columns.Bound(p => p.thanh_tien).Title("Chi phí").Filterable(false).Width(180).Format("{0:N0}").HtmlAttributes(new { @style = "text-align:right" });
+                    columns.Bound(p => p.ma_don_vi).Title("Đơn Vị").Filterable(false).Hidden();
+                    columns.Bound(p => p.ma_chi_nhanh).Title("Chi Nhánh").Filterable(false).Hidden();
+                    columns.Bound(p => p.don_vi_tinh).Title("Đơn vi tính").Filterable(false).Hidden();
+                    columns.Bound(p => p.thue_vat).Title("VAT").Filterable(false).Hidden();
+                    //columns.ForeignKey(p => p.ma_don_vi, (System.Collections.IEnumerable)ViewBag.listDonVi, "ma_phan_cap", "ten_phan_cap")
+                    //.Title("Đơn vị").Width(160);
+                    columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { @style = "text-align:right"});
+                    columns.Bound(p => p.nguoi_tao).Title("Người tạo").Filterable(false).Width(90);
+                    columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { @style = "text-align:right" });
+                    columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Filterable(false).Width(90);
+                })
+                .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+                .Pageable(p => p
+                .Messages(m => m
+                .Display("{0}-{1} của {2} dòng")
+                .Empty("Không có dòng nào")
+                .ItemsPerPage("dòng trên trang")
+                .First("Trang kế")
+                .Last("Trang tiếp")
+                .Next("Đầu trang")
+                .Previous("Cuối trang")
+                )
+                )
+                .Scrollable()
+                //.Events(e => { e.DataBound("Databound"); })
+                .Navigatable()
+                .Reorderable(r => r.Columns(true))
+                .Resizable(r => r.Columns(true))
+                .DataSource(dataSource => dataSource
+                .Ajax()
+                .PageSize(20)
+                .Model(model =>
+                {
+                    model.Id(p => p.id);
+                })
+                .Read(read => read.Action("ReadStatement", "PO"))
+            ))
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-info btn-small" onclick="addDetail()">Lưu</button>
+        <button type="button" class="btn btn-default btn-small" data-dismiss="modal">Thoát</button>
+    </div>
+</div>
+
+
+<div id="popup-confirm-approve" class="modal hide">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Thông báo</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <p>
+                <span>Bạn có chắc chắn muốn duyệt đơn hàng</span>
+            </p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="Duyet()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        var dropdownlist = $("#ma_nha_cung_cap").data("kendoDropDownList");
+        dropdownlist.readonly();
+        $("#ma_phieu").val('@ViewBag.POHeader.ma_phieu');
+        @*$("#ten_phieu").val('@ViewBag.POHeader.ten_phieu');*@
+        $('.date-picker').datepicker({ format: 'dd/mm/yyyy', autoclose: true, todayHighlight: true });
+        $("#EditForm").validate({
+            rules: {
+                //'ten_phieu': { required: true },
+            },
+            errorPlacement: function (error, element) {
+            },
+            submitHandler: function (form) {
+                var details = [];
+                $.each($("#grid").data("kendoGrid").dataSource.data(), function () {
+                    details.push({
+                        id: this.id,
+                        ma_pyc_header: this.ma_phieu_header,
+                        ma_san_pham: this.ma_san_pham,
+                        so_luong: this.so_luong,
+                        tieu_chi_ky_thuat: this.tieu_chi_ky_thuat,
+                        muc_dich_su_dung: this.muc_dich_su_dung,
+                        thong_tin_noi_bo: this.thong_tin_noi_bo,
+                    });
+                });
+
+                $(form).ajaxSubmit({
+                    clearForm: false,
+                    data: { details: details },
+                    success: function (data) {
+                        if (data.success) {
+                            $("#grid").data("kendoGrid").dataSource.read({ ma_phieu_header: '@ViewBag.POHeader.ma_phieu' });
+                            $.gritter.add({
+                                text: "Lưu thành công",
+                                class_name: 'gritter-success'
+                            });
+                            $('#ma_phieu_header').val(ma_phieu_header);
+                        }
+                        else {
+                            $.gritter.add({
+                                text: data.error,
+                                class_name: 'gritter-error'
+                            });
+                        }
+                    }
+                });
+                return false;
+            }
+        });
+
+
+    })
+
+    var Id;
+
+    function removeDetail(id) {
+        $('#popup-confirm').modal('show');
+        Id = id;
+    }
+
+    function DeleteDetail() {
+        $.post(r + "/PO/DeleteDetail", { id: Id }, function (data) {
+            if (data.success) {
+                $.gritter.add({
+                    text: "Xóa thành công",
+                    class_name: 'gritter-success'
+                });
+                $("#grid").data("kendoGrid").dataSource.read({ ma_phieu_header: '@ViewBag.POHeader.ma_phieu' });
+                $("#popup-confirm").modal('hide');
+            } else {
+                $.gritter.add({
+                    text: data.error,
+                    class_name: 'error-success'
+                });
+            }
+        })
+    }
+
+    function Databound() {
+        resizeGrid();
+    }
+
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+        dataArea = gridElement.find(".k-grid-content"),
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 12);
+    }
+
+    function Save() {
+
+        $("#EditForm").submit();
+    }
+
+    function readdatapopup() {
+        grid = $("#gridDetail").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        filter.filters.push({ field: "ma_nha_cung_cap", operator: "eq", value: '@Model.ma_nha_cung_cap' });
+        grid.dataSource.filter(filter);
+    }
+
+    function OpenPopup() {
+        readdatapopup();
+        //$("#gridDetail").data("kendoGrid").dataSource.read();
+        $("#DetailPopup").modal('show');
+    }
+
+    function checkAll(e) {
+        var x = $(e).prop('checked');
+        $("#gridDetail").find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+
+    function addDetail() {
+        var checked = false;
+        var details = [];
+
+        $("#gridDetail").find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                checked = true;
+                var item = $('#gridDetail').data('kendoGrid').dataItem($(this).closest("tr"));
+                details.push({
+                    ma_to_trinh: item.ma_phieu_header,
+                    id_StatementDetail: item.id,
+                    ma_san_pham: item.ma_san_pham,
+                    so_luong: item.so_luong,
+                    thong_so_ky_thuat: item.thong_so_ky_thuat,
+                    chi_phi: item.chi_phi,
+                    don_gia: item.don_gia,
+                    don_vi_tinh: item.don_vi_tinh,
+                    don_gia_vat: item.don_gia_vat,
+                    thue_vat: item.thue_vat,
+                    don_gia: item.don_gia,
+                    ma_don_vi: item.ma_don_vi,
+                    ma_chi_nhanh: item.ma_chi_nhanh,
+                    thong_tin_noi_bo: item.thong_tin_noi_bo,
+                });
+            }
+        });
+
+        if (checked == false) {
+            $.gritter.add({
+                title: '',
+                text: 'Vui lòng chọn dữ liệu',
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+
+        var data = new Object();
+        data.ma_nha_cung_cap = $('#ma_nha_cung_cap').val();
+
+        $.ajax({
+            type: "POST",
+            async: false,
+            url: r + "/PO/Adddetail",
+            data: { ma_phieu_header: '@ViewBag.POHeader.ma_phieu', details: details },
+            success: function (data) {
+                if (data.success) {
+                    $("#grid").data("kendoGrid").dataSource.read({ ma_phieu_header: '@ViewBag.POHeader.ma_phieu' });
+                    readdatapopup();
+                    $.gritter.add({
+                        text: "Lưu thành công",
+                        class_name: 'gritter-success'
+                    });
+                    $('#ma_phieu_header').val(data.ma_phieu_header);
+                    $("#DetailPopup").modal('hide');
+                }
+                else {
+                    $.gritter.add({
+                        title: '',
+                        text: data.error,
+                        class_name: 'gritter-error'
+                    });
+                }
+            }
+        });
+    }
+</script>
+
+
+<script>
+    function review() {
+        Process(@ViewBag.POHeader.id);
+    }
+    function printContract(html) {
+        var printWin = window.open("target", "duynh", "toolbar=yes,scrollbars=yes,resizable=yes");
+        printWin.document.write(html);
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(function () {
+            printWin.window.print();
+            window.close();
+        }, 100);
+    }
+    function Process(id) {
+        var listrowid = "";
+        if (id != "") {
+            listrowid = id;
+            if (listrowid != "" && listrowid != null) {
+                $.ajax({
+                    url: r + '/PO/ExportPrint/',
+                    type: 'POST',
+                    data: { Id: 1, isView: 'True', listPO: '@ViewBag.POHeader.ma_phieu' },
+                    success: function (data, textStatus, jqXHR) {
+                        printContract(data);
+                    },
+                });
+            }
+        }
+        else {
+            $.gritter.add({
+                title: '',
+                text: 'Vui lòng chọn dữ liệu',
+                class_name: 'gritter-error'
+            });
+        }
+    }
+
+    function doSearchpopup() {
+        var grid = $("#gridDetail").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+
+        var from_date = $('#from_date').val();
+        if (from_date) {
+
+            var from = from_date.trim().split("/");
+            var startdate = new Date(from[2], from[1] - 1, from[0]);
+
+            filter.filters.push({ field: "ngay_tao", operator: "gte", value: kendo.toString(startdate, 'yyyy-MM-dd') });
+        }
+
+        var to_date = $('#to_date').val();
+        if (to_date) {
+
+            var to = to_date.trim().split("/");
+            var todate = new Date(to[2], to[1] - 1, to[0]);
+
+            todate.setDate(todate.getDate() + 1);
+            filter.filters.push({ field: "ngay_tao", operator: "lt", value: kendo.toString(todate, 'yyyy-MM-dd') });
+        }
+
+        filter.filters.push({ field: "ma_nha_cung_cap", operator: "eq", value: '@Model.ma_nha_cung_cap' });
+
+        grid.dataSource.filter(filter);
+    }
+
+    function showApprove() {
+        $("#divMaskPopup").show();
+        $('#popup-confirm-approve').modal('show');
+    }
+
+    function Duyet() {
+
+        $.post(r + "/PO/Approve", { data: '@ViewBag.POHeader.id' }, function (data) {
+            if (data.success) {
+                $.gritter.add({
+                    text: "Duyệt thành công",
+                    class_name: 'gritter-success'
+                });
+                $('#btnApprove').hide();
+                $("#grid").data("kendoGrid").dataSource.read();
+            }
+            else {
+                $.gritter.add({
+                    text: data.error,
+                    class_name: 'gritter-error'
+                });
+            }
+            $('#popup-confirm-approve').modal('hide');
+        });
+    }
+
+</script>

@@ -1,0 +1,808 @@
+﻿@using HDBank.Core.Entities;
+@using HDBank.Models;
+@using HDBank.Helpers;
+@{
+    bool xem = ViewBag.accessDetail != null ? ViewBag.accessDetail.xem : false;
+    bool sua = ViewBag.accessDetail != null ? ViewBag.accessDetail.sua : false;
+    bool them = ViewBag.accessDetail != null ? ViewBag.accessDetail.them : false;
+    bool xoa = ViewBag.accessDetail != null ? ViewBag.accessDetail.xoa : false;
+    bool xuat = ViewBag.accessDetail != null ? ViewBag.accessDetail.xuat : false;
+    bool nhap = ViewBag.accessDetail != null ? ViewBag.accessDetail.nhap : false;
+    bool xuat_pdf = ViewBag.accessDetail != null ? ViewBag.accessDetail.xuat_pdf : false;
+
+    ViewBag.Title = "Nhóm người dùng";
+    var listActive = new List<SelectListItem>
+    {
+        new SelectListItem{Text = "Hoạt động", Value = "true"},
+        new SelectListItem{Text = "Ngưng hoạt động", Value = "false"},
+    };
+    ViewBag.listActive = listActive;
+}
+
+<style>
+    .k-alt .editable {
+        background-color: #C8E6C9;
+        color: black;
+    }
+
+    .editable {
+        background-color: #E8F5E9;
+        color: black;
+    }
+
+    .form-horizontal .control-label {
+        width: auto;
+    }
+
+    .form-horizontal .controls {
+        margin-left: 70px;
+    }
+</style>
+<div class="row-fluid widget-box">
+    <div class="span12">
+        <input type="text" id="txtSearch" class="span3" placeholder="Nhập mã, tên nhóm, mô tả" onkeyup="filter()" />
+
+        <select name="select" id="listStatus" class='chosen-select span3' data-placeholder="Chọn trạng thái..." multiple onchange="filter()">
+            <option value="true">Hoạt động </option>
+            <option value="false">Ngưng hoạt động </option>
+        </select>
+        @*<button type="button" id="btnSearch" class="btn btn-primary btn-small btnSearch" onclick="filter()" style="float:none">Lọc dữ liệu</button>*@
+    </div>
+</div>
+<div class="row-fluid">
+    @(Html.Kendo()
+    .Grid<HDBank.Core.Entities.Group>()
+    .Name("grid")
+    .Columns(columns =>
+    {
+        columns.Bound(p => p.id)
+              .HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAll'  onClick='checkAllDetail(this)' />")
+              .ClientTemplate("<input style='text-align:center' class='checkdetailid' type='checkbox' id='#=id#'/> ")
+              .Width(25).Filterable(false).Sortable(false);
+        columns.Command(command =>
+        {
+            command.Custom("Phân quyền").Click("Edit")
+            .HtmlAttributes(new { href = "javascript:void(0)", @class = "btn btn-warning", @style = "min-width:40px;" });
+        }).Width(80);
+        columns.Bound(p => p.ma_nhom).Width(100).Title("Mã nhóm").HtmlAttributes(new { @class = "editable" });
+        columns.Bound(p => p.ten_nhom).Width(120).Title("Tên nhóm").HtmlAttributes(new { @class = "editable" });
+        columns.Bound(p => p.ghi_chu).Width(250).Title("Ghi chú").HtmlAttributes(new { @class = "editable" });
+        columns.ForeignKey(p => p.trang_thai, (System.Collections.IEnumerable)ViewBag.listActive, "Value", "Text").Title("Trạng thái").Width(120).EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { @class = "editable" });
+
+        columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+        columns.Bound(p => p.nguoi_tao).Title("Người tạo").Filterable(false).Width(90);
+        columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+        columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Filterable(false).Width(90);
+    })
+    .ToolBar(s =>
+    {
+        s.Template(@<text>
+            <div class="pull-left">
+                @if (them)
+                {
+                    <a class="btn btn-success btn-small" href="javascript:void(0)" id="btnGridAdd" onclick="Create()">Thêm</a>
+                }
+                @if (them || sua)
+                {
+                    <a class="btn btn-primary btn-small" href="javascript:void(0)" id="btnGridSave" onclick="Save()">Lưu</a>
+                    <a class="btn btn-default btn-small" href="javascript:void(0)" id="btnGridCancel" onclick="Cancel()">Hủy</a>
+
+                }
+                @if (xoa)
+                {
+                    <a class="btn btn-danger btn-small" href="javascript:void(0)" id="btnGridDelete" onclick="showConfirmPopup(1)">Xóa</a>
+                }
+                @if (xuat)
+                {
+                    <a class="btn btn-primary btn-small" href="javascript:void(0)" id="btnGridExportExcel" onclick="ExportExcel()">Xuất Excel</a>
+                }
+            </div>
+        </text>);
+    })
+                        .Editable(editable => editable.Mode(GridEditMode.InCell))
+                        .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+                        .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                        .Pageable(p => p
+                                .Messages(m => m
+                                    .Display("{0}-{1} của {2} dòng")
+                                    .Empty("Không có dòng nào")
+                                    .ItemsPerPage("dòng trên trang")
+                                    .First("Trang kế")
+                                    .Last("Trang tiếp")
+                                    .Next("Đầu trang")
+                                    .Previous("Cuối trang")
+                                )
+                        )
+                        .Sortable()
+                        .Scrollable()
+                        .Events(e => { e.DataBound("Databound"); })
+                        .Navigatable()
+                        .Filterable()
+                        .Excel(excel
+                                => excel
+                                .FileName("GroupsList.xlsx")
+                                .Filterable(true)
+                                .ProxyURL(Url.Action("Excel_Export", "Group")))
+                        .Reorderable(r => r.Columns(true))
+                        .Resizable(r => r.Columns(true))
+                        .ColumnMenu()
+                        .DataSource(dataSource => dataSource
+                                    .Ajax()
+                                    .Batch(true)
+                                    .PageSize(20)
+                                    .Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+                                    .Model(model =>
+                                    {
+                                        model.Id(p => p.id);
+                                        model.Field(p => p.id).Editable(false);
+                                        model.Field(p => p.trang_thai).DefaultValue("true");
+                                        model.Field(p => p.ngay_tao).Editable(false);
+                                        model.Field(p => p.nguoi_tao).Editable(false);
+                                        model.Field(p => p.ngay_cap_nhat).Editable(false);
+                                        model.Field(p => p.nguoi_cap_nhat).Editable(false);
+                                    })
+                                    .Read(read => read.Action("Read", "Group"))
+                                    .Create(create => create.Action("Create", "Group"))
+                                    .Update(update => update.Action("Update", "Group"))
+                        ))
+</div>
+
+<div id="popup-confirm-delete" class="modal hide">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Thông báo</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <p>
+                <span>Bạn có chắc chắn muốn xóa dữ liệu?</span>
+            </p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="DeleteListGroup()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+<div id="popup" class="modal hide" style="width:950px; left:35%;">
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <div class="EditAsset"></div>
+        </div>
+    </div>
+  
+</div>
+<script type="text/ng-template" id="templategrid">
+    <div class="row-fluid">
+        <div class="span12">
+            <h3 style="margin:0px">
+                Nhóm quyền: <span id="TenNhom"></span>
+            </h3>
+            <div class="tabbable">
+                <ul class="nav nav-tabs tab-color-blue" id="myTab">
+                    <li class="active">
+                        <a data-toggle="tab" href="\\#userlist" aria-expanded="true" id="tabList">Danh sách người dùng</a>
+                    </li>
+                    <li class="">
+                        <a data-toggle="tab" href="\\#fucntionlist" aria-expanded="true" id="tabAdd">Danh sách chức năng</a>
+                    </li>
+                </ul>
+                <div class="tab-content" style="padding-bottom:0px!important">
+                    <div id="userlist" class="tab-pane fade active in">
+                        <div class="row-fluid widget-box">
+                            <div class="span12">
+                                <div class="span6">
+                                    <input type="text" style="width:100%;" id="txtSearchUser" placeholder="Nhập mã người dùng, tên người dùng, email" onkeyup="filterUser()" />
+                                </div>
+                                <div class="span6">
+                                    <select name="select" id="listCNPBPGD" class='chosen-select span12' data-placeholder="Chọn CN/Phòng/Ban/PGD..." multiple onchange="filterUser()">
+                                        <option value=""></option>
+                                        @foreach (var item in ViewBag.listCNPBPGD)
+                                        {
+                                            <option value="@item.ma_chi_nhanh">@Html.Raw(item.ten_chi_nhanh)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row-fluid" style="margin-top:10px">
+                            @(Html.Kendo()
+                                    .Grid<UserInGroup>()
+                            .Name("gridUser")
+                            
+                            .Columns(columns =>
+                            {
+                                columns.Bound(p => p.id).Hidden();
+                                columns.Bound(p => p.ma_nguoi_dung).Title("Mã người dùng").Width(150);
+                                columns.Bound(p => p.ten_nguoi_dung).Title("Tên người dùng").Width(250);
+                                columns.Bound(p => p.email).Title("Email").Width(120);
+                                columns.Bound(p => p.thuoc_nhom).Width(80)
+                                    .HeaderTemplate("<label><input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllThuocNhom' onClick='checkAllThuocNhom(this)' /> Thuộc nhóm</label>")
+                                    .HtmlAttributes(new { @style = "text-align:center" })
+                                    .HeaderHtmlAttributes(new { @style = "text-align:center" })
+                                    .ClientTemplate("<input value='\\#=thuoc_nhom\\#' id='\\#=id\\#' class='checkrowid' type='checkbox'/>");
+
+                            })
+                             .Events(events => { events.DataBound("onDataboundUser"); })
+                            .Pageable(pager => pager.PageSizes(new[] { 20, 100, 200, 300 }))
+                            .Resizable(r => r.Columns(true))
+                            .Navigatable()
+                            .Scrollable()
+                                    //.Sortable()
+                            .DataSource(dataSource => dataSource
+                            .Ajax()
+                                     .Sort(s =>
+                                    {
+                                        s.Add("thuoc_nhom").Descending();
+                                    })
+                            .Batch(true)
+                            .PageSize(20)
+                            .Model(model =>
+                            {
+                                model.Id(p => p.id);
+                            })
+                            //.Events(events => { events.Error("error_handler_popup"); events.RequestEnd("onRequestEnd_popup"); })
+                                    .Read(read => read.Action("ReadUserInGroup", "Group").Data("getMa_nhom"))
+                            ).ToClientTemplate()
+                            )
+                        </div>
+                        <div class="modal-footer">
+                            <a class="btn btn-default btn-small btn-save" onclick="SaveUserInGroup()">Lưu</a>
+                            <a class="btn btn-default btn-small" data-dismiss="modal">Đóng</a>
+                        </div>
+                    </div>
+                    <div id="fucntionlist" class="tab-pane fade">
+                        <div class="row-fluid widget-box">
+                            @*<label class="control-label">Chọn nhóm chức năng</label>*@
+                            <select id="selectFunction" class="span12" onchange="ChangeFunction()" multiple data-placeholder="Chọn nhóm chức năng">
+                                <option></option>
+                                @foreach (var item in ViewBag.listMenu)
+                                {
+                                    <option value="@item.id">@Html.Raw(item.ten_chuc_nang)</option>
+                                }
+                            </select>
+                            <div class="row-fluid" style="margin-top:10px">
+                                @(Html.Kendo()
+                            .Grid<HDBank.Core.Entities.AccessRightDetail>()
+                            .Name("gridpopup")
+                            //.HtmlAttributes(new { @style = "height:330px;" })
+                            .Columns(columns =>
+                            {
+                                columns.Bound(p => p.thu_tu).Title("Thứ tự").Hidden();
+                                columns.Bound(p => p.ma_man_hinh).Title("Màn hình").Width(250);
+                                columns.Bound(p => p.xem).Title("Xem")
+                                .HeaderTemplate("<label><input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllView' onClick='checkAllView(this)' /> Xem</label>")
+                                .HtmlAttributes(new { @style = "text-align:center" })
+                                .HeaderHtmlAttributes(new { @style = "text-align:center" })
+                                .ClientTemplate("<input value='\\#=xem\\#' id='\\#=id\\#_TTView' class='checkrowid' type='checkbox' onchange='changeAsset(\\#=id\\#)'/>");
+                                columns.Bound(p => p.them).Title("Thêm").HeaderTemplate("<label><input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllInsert' onClick='checkAllInsert(this)' /> Thêm</label>").HtmlAttributes(new { @style = "text-align:center" }).HeaderHtmlAttributes(new { @style = "text-align:center" })
+                                .ClientTemplate("<input value='\\#=them\\#' id='\\#=id\\#_TTInsert' class='checkrowid' style='text-align:center;opacity:1;' type='checkbox'  onchange='changeAsset(\\#=id\\#)'/>");
+                                columns.Bound(p => p.sua).Title("Sửa").HeaderTemplate("<label><input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllUpdate'  onClick='checkAllUpdate(this)' /> Cập nhật</label>").HtmlAttributes(new { @style = "text-align:center" }).HeaderHtmlAttributes(new { @style = "text-align:center" })
+                                .ClientTemplate("<input value='\\#=sua\\#'  id='\\#=id\\#_TTUpdate'  class='checkrowid' style='text-align:center;opacity:1;' type='checkbox'  onchange='changeAsset(\\#=id\\#)'/>");
+                                columns.Bound(p => p.xoa).Title("Xóa").HeaderTemplate("<label><input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllDelete'  onClick='checkAllDelete(this)' /> Xóa</label>").HtmlAttributes(new { @style = "text-align:center" }).HeaderHtmlAttributes(new { @style = "text-align:center" })
+                                .ClientTemplate("<input value='\\#=xoa\\#' class='checkrowid' id='\\#=id\\#_TTDelete'  style='text-align:center;opacity:1;' type='checkbox'  onchange='changeAsset(\\#=id\\#)'/>");
+                                columns.Bound(p => p.xuat).Title("Xuất Excell").HeaderTemplate("<label><input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllExport'  onClick='checkAllExport(this)' /> Xuất Excell</label>").HtmlAttributes(new { @style = "text-align:center" }).HeaderHtmlAttributes(new { @style = "text-align:center" })
+                                .ClientTemplate("<input value='\\#=xuat\\#' id='\\#=id\\#_TTExportExcel'  class='checkrowid' style='text-align:center;opacity:1;' type='checkbox'  onchange='changeAsset(\\#=id\\#)'/>");
+                                columns.Bound(p => p.xuat_pdf).Title("Xuất Pdf").HeaderTemplate("<label><input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllExportPDF'  onClick='checkAllPDF(this)' /> Xuất Pdf</label>").HtmlAttributes(new { @style = "text-align:center" }).HeaderHtmlAttributes(new { @style = "text-align:center" })
+                                .ClientTemplate("<input value='\\#=xuat_pdf\\#' id='\\#=id\\#_TTExportPDF'  class='checkrowid' style='text-align:center;opacity:1;' type='checkbox'  onchange='changeAsset(\\#=id\\#)'/>");
+                                columns.Bound(p => p.nhap).Title("Nhập Excell").HeaderTemplate("<label><input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllImport'  onClick='checkAllImport(this)' /> Nhập Excell</label>").HtmlAttributes(new { @style = "text-align:center" }).HeaderHtmlAttributes(new { @style = "text-align:center" })
+                                .ClientTemplate("<input value='\\#=nhap\\#'  id='\\#=id\\#_TTImport'  class='checkrowid' style='text-align:center;opacity:1;' type='checkbox'  onchange='changeAsset(\\#=id\\#)'/>");
+                                columns.Bound(p => p.phan_quyen).Title("Phân quyền").HeaderTemplate("<label><input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAllPhanQuyen'  onClick='checkAllPhanQuyen(this)' />Phân quyền</label>").HtmlAttributes(new { @style = "text-align:center" }).HeaderHtmlAttributes(new { @style = "text-align:center" })
+                                .ClientTemplate("<input value='\\#=phan_quyen\\#'  id='\\#=id\\#_TTPhanQuyen'  class='checkrowid' style='text-align:center;opacity:1;' type='checkbox'  onchange='changeAsset(\\#=id\\#)'/>");
+                            })
+                            .Events(events => { events.DataBound("onDataboundCondition"); })
+                            .Pageable(pager => pager.PageSizes(new[] { 20, 100, 200, 300 }))
+                            .Resizable(r => r.Columns(true))
+                            .Navigatable()
+                            .Scrollable()
+                                        //.Sortable()
+                            .DataSource(dataSource => dataSource
+                            .Ajax()
+                            .Sort(s =>
+                            {
+                                s.Add("thu_tu");
+                            })
+                            .Batch(true)
+                            .PageSize(100)
+                            .Model(model =>
+                            {
+                                model.Id(p => p.id);
+                            })
+                            .Events(events => { events.Error("error_handler_popup"); events.RequestEnd("onRequestEnd_popup"); })
+                            .Read(read => read.Action("ReadAccessRightDetail", "Group").Data("getMa_nhom"))
+                            .Update(update => update.Action("UpdateAccessRight", "Group"))
+                            ).ToClientTemplate()
+                                )
+                            </div>
+                            <div class="modal-footer">
+                                <a class="btn btn-default btn-small btn-save" onclick="SaveMaster()">Lưu</a>
+                                <a class="btn btn-default btn-small" data-dismiss="modal">Đóng</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</script>
+
+@*GridUser*@
+<script>   
+    function onDataboundUser(e) {
+        $('#gridUser').find(".checkrowid").each(function () {
+            if ($(this).val() == '1') {
+                $(this).prop('checked', true);
+            }
+            else {
+                $(this).prop('checked', false);
+            }
+        });
+        var dataSource = $("#gridUser").data("kendoGrid").dataSource.data();
+        for (item in dataSource) {
+            dataSource[item].dirty = true;
+        }
+        resizeGridUser();
+    }
+    function checkAllThuocNhom(e) {
+        var x = $(e).prop('checked');
+        $("#gridUser").find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+
+    function resizeGridUser() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#gridUser').offset().top);
+        var gridElement = $("#gridUser"),
+        dataArea = gridElement.find(".k-grid-content");
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 130);
+    }
+
+    function SaveUserInGroup() {
+        var listrowid = "";
+
+        $('#gridUser').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == 1) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+            $.post(r + "/Group/InsertUserInGroup", { data: listrowid, ma_nhom_nguoi_dung: ma_nhom_nguoi_dung }, function (data) {
+                if (data.success) {
+                    $.gritter.add({
+                        text: "Lưu dữ liệu thành công",
+                        class_name: 'gritter-success'
+                    });
+                    $("#gridUser").data("kendoGrid").dataSource.read();
+                }
+                else {
+                    $.gritter.add({
+                        text: data.error,
+                        class_name: 'gritter-error'
+                    });
+                }
+                $('#popup').modal('hide');
+            });
+        }
+    }
+
+    //search
+    function filterUser() {
+        grid = $("#gridUser").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        var text = $("#txtSearchUser").val();
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "ma_nguoi_dung", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ten_nguoi_dung", operator: "contains", value: text });
+            filterOr.filters.push({ field: "email", operator: "contains", value: text });
+            filter.filters.push(filterOr);
+        }
+
+        var listDonVi = $("#listCNPBPGD option:selected");
+        var fillterdonvi = { logic: "or", filters: [] };
+        if (listDonVi.length > 0) {
+            for (var i = 0; i < listDonVi.length; i++) {
+                var option = listDonVi[i].value;
+                if (option != '') {
+                    fillterdonvi.filters.push({ field: "ma_chi_nhanh", operator: "eq", value: option });
+                }
+            }
+            filter.filters.push(fillterdonvi);
+        }
+        grid.dataSource.filter(filter);
+        console.log(text)
+    }
+
+</script>
+@*GridFunction*@
+<script>
+    var ma_nhom_nguoi_dung;
+    function getMa_nhom() {
+        return {
+            ma_nhom: ma_nhom_nguoi_dung
+        }
+    }
+    function Edit(e) {
+        $('#popup').modal('show');
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+        ma_nhom_nguoi_dung = dataItem.id;
+        loadgridpopup()
+        $("#TenNhom").text(dataItem.ten_nhom);
+        $('#selectFunction, #listUsers').chosen();
+        $("#listCNPBPGD").chosen();
+    }
+
+    function loadgridpopup() {
+        var obj = {};
+        var detailTemplate = kendo.template($('#templategrid').html());
+        $(".EditAsset").html(detailTemplate(obj));
+    }
+
+    function onDataboundCondition(e) {
+        $('#gridpopup').find(".checkrowid").each(function () {
+            if ($(this).val() == 'true') {
+                $(this).prop('checked', true);
+            }
+            else {
+                $(this).prop('checked', false);
+            }
+        });
+        var dataSource = $("#gridpopup").data("kendoGrid").dataSource.data();
+        for (item in dataSource) {
+            dataSource[item].dirty = true;
+        }
+        resizeGridFunction();
+        $('#selectFunction, #listUsers').chosen();
+
+        $('#selectFunction_chosen').css('width', '100%');
+    }
+
+    function resizeGridFunction() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#gridpopup').offset().top);
+        var gridElement = $("#gridpopup"),
+        dataArea = gridElement.find(".k-grid-content");
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+       // dataArea.height(offsetbottom - otherElementsHeight - 130);
+        dataArea.height(245);
+    }
+      
+    function checkAllView(e) {
+        var x = $(e).prop('checked');
+        $('#gridpopup').find("[id*='_TTView']").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function checkAllInsert(e) {
+        var x = $(e).prop('checked');
+        $('#gridpopup').find("[id*='_TTInsert']").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function checkAllUpdate(e) {
+        var x = $(e).prop('checked');
+        $('#gridpopup').find("[id*='_TTUpdate']").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function checkAllDelete(e) {
+        var x = $(e).prop('checked');
+        $('#gridpopup').find("[id*='_TTDelete']").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function checkAllExport(e) {
+        var x = $(e).prop('checked');
+        $('#gridpopup').find("[id*='_TTExportExcel']").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function checkAllImport(e) {
+        var x = $(e).prop('checked');
+        $('#gridpopup').find("[id*='_TTImport']").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function checkAllPDF(e) {
+        var x = $(e).prop('checked');
+        $('#gridpopup').find("[id*='_TTExportPDF']").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function checkAllPhanQuyen(e) {
+        var x = $(e).prop('checked');
+        $('#gridpopup').find("[id*='_TTPhanQuyen']").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function ChangeFunction() {
+        var grid = $("#gridpopup").data("kendoGrid");
+        if (grid != null) {
+            var filter = { logic: "and", filters: [] };
+            var text = $("#selectFunction").val();
+            if (text) {
+                var filterOr = { logic: "or", filters: [] };
+                for (i = 0; i < text.length; i++) {
+                    filterOr.filters.push({ field: "id_cha", operator: "eq", value: text[i] });
+                }
+                filter.filters.push(filterOr);
+            }
+            grid.dataSource.filter(filter);
+        }
+        $('#checkboxcheckAllView').prop('checked', false);
+        $('#checkboxcheckAllInsert').prop('checked', false);
+        $('#checkboxcheckAllUpdate').prop('checked', false);
+        $('#checkboxcheckAllDelete').prop('checked', false);
+        $('#checkboxcheckAllExport').prop('checked', false);
+        $('#checkboxcheckAllImport').prop('checked', false);
+    }
+
+    function changeAsset(e) {
+        $.each($("#gridpopup").data("kendoGrid").dataSource.data(), function () {
+            if (this.id == e) {
+                if ($("#" + e + "_TTView").prop("checked") == true) {
+                    this.xem = true;
+                }
+                else {
+                    this.xem = false;
+                }
+
+                if ($("#" + e + "_TTInsert").prop("checked") == true) {
+                    this.them = true;
+                }
+                else {
+                    this.them = false;
+                }
+
+                if ($("#" + e + "_TTUpdate").prop("checked") == true) {
+                    this.sua = true;
+                }
+                else {
+                    this.sua = false;
+                }
+
+                if ($("#" + e + "_TTDelete").prop("checked") == true) {
+                    this.xoa = true;
+                }
+                else {
+                    this.xoa = false;
+                }
+
+                if ($("#" + e + "_TTExportExcel").prop("checked") == true) {
+                    this.xuat = true;
+                }
+                else {
+                    this.xuat = false;
+                }
+
+                if ($("#" + e + "_TTExportPDF").prop("checked") == true) {
+                    this.xuat_pdf = true;
+                }
+                else {
+                    this.xuat_pdf = false;
+                }
+
+                if ($("#" + e + "_TTImport").prop("checked") == true) {
+                    this.nhap = true;
+                }
+                else {
+                    this.nhap = false;
+                }
+
+                if ($("#" + e + "_TTPhanQuyen").prop("checked") == true) {
+                    this.phan_quyen = true;
+                }
+                else {
+                    this.phan_quyen = false;
+                }
+                return;
+            }
+
+        });
+    }
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('th[data-field="id"] .k-header-column-menu span').removeClass("k-i-arrowhead-s");
+        $('th[data-field="id"] .k-header-column-menu span').removeClass("k-icon");
+    });
+
+    $("#listStatus").chosen();
+    $("#listUsers").chosen();
+
+    function Databound() {
+        resizeGrid();
+    }
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+        dataArea = gridElement.find(".k-grid-content"),
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 12);
+    }   
+ 
+    function showConfirmPopup(e) {
+        if (e == 1) {
+            var listrowid = "";
+            $('#grid').find(".checkdetailid").each(function () {
+                if ($(this).prop('checked') == true) {
+                    listrowid += $(this).attr("id") + '@@@@';
+                }
+            });
+            if (listrowid != "" && listrowid != null) {
+                deleteId = 1;
+                $("#divMaskPopup").show();
+                $('#popup-confirm-delete').modal('show');
+            }
+            else {
+                $.gritter.add({
+                    title: '',
+                    text: 'Vui lòng chọn dữ liệu muốn xóa',
+                    class_name: 'gritter-error'
+                });
+            }
+        }
+    }
+
+    function DeleteListGroup() {
+        if (deleteId == 1) {
+            var listrowid = "";
+            $('#grid').find(".checkdetailid").each(function () {
+                if ($(this).prop('checked') == true) {
+                    listrowid += $(this).attr("id") + '@@@@';
+                }
+            });
+            if (listrowid != "" && listrowid != null) {
+                $.post(r + "/Group/DeleteListGroup", { data: listrowid }, function (data) {
+                    if (data.success) {
+                        $.gritter.add({
+                            text: "Xóa dữ liệu thành công",
+                            class_name: 'gritter-success'
+                        });
+                        $("#grid").data("kendoGrid").dataSource.read();
+                    }
+                    else {
+                        $.gritter.add({
+                            text: data.error,
+                            class_name: 'gritter-error'
+                        });
+                    }
+                    $('#popup-confirm-delete').modal('hide');
+                });
+            }
+        }
+        else {
+        }
+    }
+    function Create() {
+        $("#grid").data("kendoGrid").dataSource.insert();
+
+    }
+    function Save() {
+        if ($('#grid').data('kendoGrid').dataSource.hasChanges() == true) {
+            $('#grid').data('kendoGrid').saveChanges();
+        }
+    }
+
+    function SaveMaster() {
+        if ($('#gridpopup').data('kendoGrid').dataSource.hasChanges() == true) {
+            $('#gridpopup').data('kendoGrid').saveChanges();
+        }
+    }
+    
+    function Cancel() {
+        $("#grid").data("kendoGrid").dataSource.cancelChanges();
+    }
+
+    function checkAllDetail(e) {
+        var x = $(e).prop('checked');
+        $("#grid").find(".checkdetailid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function error_handler(e) {
+        if (e.errors) {
+            var message = "\n";
+            $.each(e.errors, function (key, value) {
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += this + "\n";
+                    });
+                }
+            });
+            $.gritter.add({
+                text: message,
+                class_name: 'gritter-error'
+            });
+        }
+    }
+    function onRequestEnd(e) {
+        if (e.type == "update" || e.type == "create" || e.type == "delete") {
+            if (!e.response.Errors) {
+                $.gritter.add({
+                    title: '',
+                    text: 'Lưu dữ liệu thành công',
+                    class_name: 'gritter-success'
+                });
+                $("#grid").data("kendoGrid").dataSource.read()
+            }
+
+        }
+    }
+    function error_handler_popup(e) {
+        if (e.errors) {
+            var message = "\n";
+            $.each(e.errors, function (key, value) {
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += this + "\n";
+                    });
+                }
+            });
+            $.gritter.add({
+                text: message,
+                class_name: 'gritter-error'
+            });
+        }
+    }
+    function onRequestEnd_popup(e) {
+        if (e.type == "update" || e.type == "create" || e.type == "delete") {
+            if (!e.response.Errors) {
+                $.gritter.add({
+                    title: '',
+                    text: 'Lưu dữ liệu thành công',
+                    class_name: 'gritter-success'
+                });
+                $("#grid").data("kendoGrid").dataSource.read()
+            }
+
+        }
+    }
+   
+    function filter() {
+        grid = $("#grid").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        var text = $("#txtSearch").val();
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "ma_nhom", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ten_nhom", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ghi_chu", operator: "contains", value: text });
+            filter.filters.push(filterOr);
+        }
+      
+        var listStatus = $("#listStatus option:selected");
+        var fillterStatus = { logic: "or", filters: [] };
+        if (listStatus.length > 0) {
+            for (var i = 0; i < listStatus.length; i++) {
+                var option = listStatus[i].value;
+                if (option != '') {
+                    fillterStatus.filters.push({ field: "trang_thai", operator: "eq", value: option });
+                }
+            }
+            filter.filters.push(fillterStatus);
+        }
+
+        grid.dataSource.filter(filter);
+        console.log(text)
+    }
+    function ExportExcel() {
+        var grid = $("#grid").data("kendoGrid");
+        grid.saveAsExcel();
+    }
+   
+</script>

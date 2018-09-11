@@ -1,0 +1,226 @@
+﻿@using HDBank.Core.Entities
+@{
+    bool xem = ViewBag.accessDetail != null ? ViewBag.accessDetail.xem : false;
+    bool sua = ViewBag.accessDetail != null ? ViewBag.accessDetail.sua : false;
+    bool them = ViewBag.accessDetail != null ? ViewBag.accessDetail.them : false;
+    bool xoa = ViewBag.accessDetail != null ? ViewBag.accessDetail.xoa : false;
+    bool xuat = ViewBag.accessDetail != null ? ViewBag.accessDetail.xuat : false;
+    bool nhap = ViewBag.accessDetail != null ? ViewBag.accessDetail.nhap : false;
+
+    ViewBag.Title = "Báo cáo các PR còn PENDING";
+    var newData = new PRequestHeader();
+}
+<style>
+    .k-alt .editable {
+        background-color: #C8E6C9;
+        color: black;
+    }
+
+    .editable {
+        background-color: #E8F5E9;
+        color: black;
+    }
+</style>
+<script src="~/Scripts/jquery.validate.js"></script>
+<script src="~/Scripts/autoNumeric-min.js"></script>
+<script src="~/Scripts/bootbox.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+<div class="row-fluid">
+    <div class="span12">
+        <div class="row-fluid">
+            <div class="col-sm-6">
+                <div class="tabbable">
+                    <ul class="nav nav-tabs tab-color-blue" id="myTab">
+                        <li class="active">
+                            <a data-toggle="tab" href="#home" aria-expanded="true" id="tabList">
+                                Danh sách các PR còn PENDING
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" style="padding-bottom:0px!important">
+                        <div id="home" class="tab-pane fade active in">
+                            <div class="row-fluid widget-box">
+                                <div class="span12">
+                                    <input type="text" class="span2 date-picker" placeholder="Từ ngày" name="tu_ngay" id="tu_ngay" value="">
+                                    <input type="text" class="span2 date-picker" placeholder="Đến ngày" name="den_ngay" id="den_ngay" value="">
+                                    <button type="button" id="btnSearch" class="btn btn-primary btn-small btnSearch" onclick="filter()" style="float:none">Lọc dữ liệu</button>
+                                </div>
+                            </div>
+                            <div class="row-fluid">
+                                @(Html.Kendo()
+                                .Grid<HDBank.Core.Entities.ReportPendingPR>()
+                                .Name("grid")
+                                .Columns(columns =>
+                                {
+                                    columns.Bound(p => p.ma_phieu_pr).Width(110).Title("Số PR");
+                                    columns.Bound(p => p.ngay_tao_pr).Title("Ngày tạo PR").Width(110).Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                                    columns.Bound(p => p.don_vi_yeu_cau).Width(110).Title("Đơn vị yêu cầu");
+                                    columns.Bound(p => p.ma_san_pham).Width(130).Title("Mã hàng hóa/dịch vụ");
+                                    columns.Bound(p => p.ten_san_pham).Width(150).Title("Tên hàng hóa/Dịch vụ");
+                                    columns.Bound(p => p.so_luong).Width(110).Title("Số lượng");
+                                    columns.Bound(p => p.khoi_cntt_nhdt_xac_nhan).Title("Khối CNTT&NHĐT xác nhận ").Width(150).Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                                    columns.Bound(p => p.phong_qldv_khnq_xac_nhan).Title("Phòng QLDVKH&NQ xác nhận").Width(130).Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                                    columns.Bound(p => p.phong_ptml_xdcb_xac_nhan).Title("Phòng PTML&XDCB xác nhận").Width(130).Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                                    columns.Bound(p => p.phong_mkt_pr_xac_nhan).Title("Phòng MKT&PR xác nhận").Width(110).Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                                    columns.Bound(p => p.phong_ban_khac).Width(110).Title("Phòng ban khác xác nhận").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                                    columns.Bound(p => p.bang_tong_hop_chi_mua_sam).Title("Tờ trình chọn NCC/ BTH ").Width(110).Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                                    columns.Bound(p => p.po_don_dat_hang).Width(110).Title("PO (Đơn Đặt hàng)").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                                    columns.Bound(p => p.ngay_nhan_hang).Width(110).Title("Ngày nhận hàng HO").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+                                })
+                                .ToolBar(toolbar =>
+                                {
+                                    toolbar.Custom().Text("Xuất báo cáo")
+                                    .HtmlAttributes(new { @class = "btn btn-success", @Href = "javascript:void(0)", @onclick = "ExportData()" });
+                                })
+                                .Sortable()
+                                .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+                                .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                                    .Pageable(p => p
+                                    .Messages(m => m
+                                    .Display("{0}-{1} của {2} dòng")
+                                    .Empty("Không có dòng nào")
+                                    .ItemsPerPage("dòng trên trang")
+                                    .First("Trang kế")
+                                    .Last("Trang tiếp")
+                                    .Next("Đầu trang")
+                                    .Previous("Cuối trang")
+                                    )
+                                )
+                                .Scrollable()
+                                .Events(e =>
+                                {
+                                    e.DataBound("Databound");
+                                })
+                                .Navigatable()
+                                .Reorderable(r => r.Columns(true))
+                                .Resizable(r => r.Columns(true))
+                                .DataSource(dataSource => dataSource
+                                    .Ajax()
+                                    .PageSize(20)
+                                    //.Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+                                    .Model(model =>
+                                    {
+                                        //model.Id(p => p.id);
+                                    })
+                                    .Read(read => read.Action("Read", "ReportPendingPR"))
+                                ))
+                            </div>
+
+                        </div>
+                        <div id="edit" class="tab-pane fade">
+                            <div class="span12 formEdit">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function checkAll(e) {
+        var x = $(e).prop('checked');
+        $("#grid").find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    $(document).ready(function () {
+        $('.date-picker').datepicker({ format: 'dd/mm/yyyy', autoclose: true, todayHighlight: true,  });
+        $('.date-picker').datepicker("setDate", new Date());
+        filter();
+    });
+
+    function onDatabound(e) {
+        var listView = this;
+        var total_don_gia_vat = 0;
+        var total_sl = 0;
+        var data = e.sender.dataSource._data;
+        for (var i = 0; i < data.length; i++) {
+            total_don_gia_vat = total_don_gia_vat + (data[i].don_gia_vat * data[i].so_luong);
+            total_sl = total_sl + data[i].so_luong;
+        }
+        $('#tong_so_luong').text(currency2String(total_sl));
+        $('#tong_don_gia_vat').text(currency2String(total_don_gia_vat));
+        drawcolor();
+    }
+
+
+    function Databound() {
+        resizeGrid();
+    }
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+        dataArea = gridElement.find(".k-grid-content"),
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 15);
+    }
+    function filter() {
+        grid = $("#grid").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+   
+        var startdate = $("#tu_ngay").val();
+        var enddate = $("#den_ngay").val();
+        if (startdate && enddate) {
+            startdate = startdate.split('/')[2] + "/" + startdate.split('/')[1] + "/" + startdate.split('/')[0];
+            enddate = enddate.split('/')[2] + "/" + enddate.split('/')[1] + "/" + enddate.split('/')[0];
+            var todate = new Date(enddate);
+            todate.setDate(todate.getDate() + 1);
+            filter.filters.push({ field: "ngay_tao_pr", operator: "gte", value: startdate });
+            filter.filters.push({ field: "ngay_tao_pr", operator: "lt", value: enddate });
+        }
+        grid.dataSource.filter(filter);
+    }
+
+
+</script>
+@* Print-BaoHV *@
+<script>
+    function Process(id) {
+        var listrowid = "";
+        if (id != "") {
+            listrowid = id;
+            if (listrowid != "" && listrowid != null) {
+                $.ajax({
+                    url: r + '/PR/ExportPrint/',
+                    type: 'POST',
+                    data: { Id: 1, isView: 'True', listPO: listrowid },
+                    success: function (data, textStatus, jqXHR) {
+                        printContract(data);
+                    },
+                });
+            }
+        }
+        else {
+            $.gritter.add({
+                title: '',
+                text: 'Vui lòng chọn dữ liệu',
+                class_name: 'gritter-error'
+            });
+        }
+    }
+    function checkAllDetail(e) {
+        var x = $(e).prop('checked');
+        $("#gridDetail").find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function ExportData() {
+        var startdate = $("#tu_ngay").val();
+        var enddate = $("#den_ngay").val();
+        startdate = startdate.split('/')[2] + "/" + startdate.split('/')[1] + "/" + startdate.split('/')[0];
+        enddate = enddate.split('/')[2] + "/" + enddate.split('/')[1] + "/" + enddate.split('/')[0];
+        window.open(r + "/ReportPendingPR/ExportData?startdate=" + startdate + "&enddate=" + enddate, "_self");
+    };
+
+
+
+
+</script>

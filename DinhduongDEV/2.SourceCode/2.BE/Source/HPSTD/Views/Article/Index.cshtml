@@ -1,0 +1,493 @@
+﻿@using HPSTD.Core.Entities
+@{
+    ViewBag.Title = "Danh sách tin tức";
+    var newData = new Article();
+}
+<link href="~/Content/assets/global/plugins/jquery-multi-select/css/multi-select.css" rel="stylesheet" />
+<script src="~/Content/assets/global/plugins/jquery-multi-select/js/jquery.multi-select.js"></script>
+<style>
+    .form-actions {
+        background: 0 0 !important;
+        padding: 19px 10px !important;
+    }
+    .form-actions.right {
+        text-align: right !important;
+    }
+    .ms-container .ms-list{
+        height:570px!important;
+    }
+</style>
+<script src="~/Scripts/jquery.validate.min.js"></script>
+<div class="row-fluid">
+    <div class="span12">
+        <div class="row-fluid">
+            <div class="col-sm-6">
+                <div class="tabbable">
+                    <ul class="nav nav-tabs tab-color-blue" id="myTab">
+                        <li class="active">
+                            <a data-toggle="tab" href="#home" aria-expanded="true" id="tabList">
+                                <i class="green ace-icon fa fa-home bigger-120"></i>
+                                Danh sách bản tin
+                            </a>
+                        </li>
+                        <li class="">
+                            <a data-toggle="tab" href="#edit" aria-expanded="false" id="tabAdd">
+                                Thêm bản tin
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" style="padding-bottom:0px!important">
+                        <div id="home" class="tab-pane fade active in">
+                            <div class="row-fluid  widget-box">
+                                <div class="span4">
+                                    <input type="text" class="span12" placeholder="Bản tin, nôi dung" onkeyup="filter(this)" />
+                                </div>
+                            </div>
+                            <div class="row-fluid">
+                                @(Html.Kendo()
+                                .Grid<HPSTD.Core.Entities.Article>()
+                                .Name("grid")
+                                //.HtmlAttributes(new { @style = "height:500px" })
+                                .Columns(columns =>
+                                {
+                                columns.Bound(p => p.id)
+                                         .HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAll'  onClick='checkAll(this)' />")
+                                         .ClientTemplate("<input style='text-align:center' class='checkrowid' type='checkbox' id='#=id#'/> ")
+                                         .Width(25).Filterable(false).Sortable(false);
+                                columns.Template(@<text></text>).HtmlAttributes(new { style = "text-align: center;" }).ClientTemplate("<span ><a class='btn btn-mini btn-warning' style ='width:40px' onclick='edit(this)'> Sửa </a></span>").Width(60);
+                                    columns.Bound(p => p.tieu_de).Width(300).Title("Tiêu đề").ClientTemplate("<span style='cursor:pointer; color:\\#040001' onclick='edit(this)'>#=tieu_de#</span>");
+                                    // columns.Bound(p => p.noi_dung).Width(140).Title("Nội dung");
+                                    columns.Bound(p => p.trang_thai).Width(90).Title("Trạng thái").ClientTemplate("#if(trang_thai){#Đang hoạt động#}else{#Ngưng hoạt động#}#");
+                                    columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Filterable(false).Width(100).Format("{0:dd/MM/yyyy HH:mm}");
+                                    columns.Bound(p => p.nguoi_tao).Title("Người tạo").Filterable(false).Width(80);
+                                    columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Filterable(false).Width(100).Format("{0:dd/MM/yyyy HH:mm}");
+                                    columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Filterable(false).Width(80);
+                                })
+
+                            .Sortable()
+                            .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+                            .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                            .Pageable(p => p
+                                .Messages(m => m
+                                    .Display("{0}-{1} của {2} dòng")
+                                    .Empty("Không có dòng nào")
+                                    .ItemsPerPage("dòng trên trang")
+                                    .First("Trang kế")
+                                    .Last("Trang tiếp")
+                                    .Next("Đầu trang")
+                                    .Previous("Cuối trang")
+                                )
+                            )
+                            .Scrollable()
+                            .Events(e => { e.DataBound("Databound"); })
+                            .Navigatable()
+                            .Reorderable(r => r.Columns(true))
+                            .Resizable(r => r.Columns(true))
+                            .DataSource(dataSource => dataSource
+                            .Ajax()
+                            .PageSize(20)
+                            .Model(model =>
+                            {
+                                model.Id(p => p.id);
+                            })
+
+                            .Read(read => read.Action("Read", "Article"))
+                             ))
+                            </div>
+                        </div>
+                        <div id="edit" class="tab-pane fade">
+                            <div class="span12 formEdit">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script type="text/template" id="EditTemplate">
+    <form action="@Url.Content("~/Article/CreateUpdate")" id="EditForm" method="post" enctype="multipart/form-data">
+        <div class="row-fluid">
+            <div class="span7">
+                <div class="row-fluid">
+                    <div class="span8">
+                        <input type="hidden" name="id" value="#=id#" />
+                        <div class="control-group">
+                            <label>Tiêu đề</label>
+                            <div class="controls">
+                                <input type="text" class="span12" placeholder="Tiêu đề" name="tieu_de" value="#=tieu_de!=null ? tieu_de : ''#">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="span4">
+                        <div class="control-group">
+                            <label class="control-label">Loại tin</label>
+                            <select class="span12" name="loai_tin">
+                                @foreach (var item in ViewBag.listLoaiTin)
+                                {
+                                    <option value="@item.ma_tham_so">@Html.Raw(item.gia_tri)</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row-fluid">
+                    <div class="span6">
+                        <div class="control-group">
+                            <label>Trạng thái</label>
+                            <div class="controls">
+                                <div class="controls">
+                                    <select name="trang_thai" class="span12">
+                                        #if(!trang_thai){#
+                                        <option value="true">Đang hoạt động</option>
+                                        <option value="false" selected>Ngừng hoạt động</option>
+                                        #}else{#
+                                        <option value="true" selected>Đang hoạt động</option>
+                                        <option value="false">Ngừng hoạt động</option>
+                                        #}#
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="span6">
+                        <div class="control-group">
+                            <label>File đính kèm</label>
+                            <div class="controls">
+                                <input type="file" class="span12 FileUpload" placeholder="File đính kèm" name="file_dinh_kem" value="@Url.Content("#=file_dinh_kem#")">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row-fluid">
+                    <div class="span12">
+                        <div class="control-group">
+                            <label class="control-label">Mô tả</label>
+                            <div class="controls">
+                                <textarea name="mo_ta" placeholder="Mô tả" class="span12">#=mo_ta!=null? mo_ta:''#</textarea>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="row-fluid">
+                    <div class="span12">
+                        <div class="control-group">
+                            <label>Nội dung</label>
+                            <div class="controls">
+                                <div class="clearfix">
+                                    @(Html.Kendo().Editor().Name("noi_dung")
+                                        .Value("#=noi_dung !=null? noi_dung : ''#")
+                                        .Encode(false)
+                                        .HtmlAttributes(new { style = "height:350px;width:100%;", placeholder = "Nội dung" })
+                                        .Tools(tools => tools
+                                        .Clear()
+                                        .Bold().Italic().Underline().Strikethrough()
+                                        .JustifyLeft().JustifyCenter().JustifyRight().JustifyFull()
+                                        .InsertUnorderedList().InsertOrderedList()
+                                        .Outdent()
+                                        .Indent()
+                                        .CreateLink().Unlink()
+                                        //.InsertImage()
+                                        .InsertFile()
+                                        .SubScript()
+                                        .SuperScript()
+                                        .TableEditing()
+                                        .ViewHtml()
+                                        .Formatting()
+                                        .CleanFormatting()
+                                        .FontColor()
+                                        .BackColor()
+                                        //.CustomTemplate(template => template.Template("<a class='k-button' onclick='onFullScreen(this)'>" + Html.Raw(Resources.Global._full_screen) + "</a><a class='k-button' onclick='show_popup_selectimage()'>" + Html.Raw(Resources.Global._select_image) + "</a>")))
+                                        //.Messages(m => m
+                                        //    .ImageWebAddress(@Resources.Global._image_addr)
+                                        //    .DialogCancel(@Resources.Global._cancel)
+                                        //    .DialogInsert(@Resources.Global._add)
+                                        //)
+                                        //.FileBrowser(fileBrowser => fileBrowser
+                                        //.File(@HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority) + "/Content/Upload/docs/{0}")
+                                        //.Read("Read", "FileBrowser")
+                                        //.Create("Create", "FileBrowser")
+                                        //.Destroy("Destroy", "FileBrowser")
+                                        //.Upload("Upload", "FileBrowser")
+                                        ).ToClientTemplate()
+                                    )
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row-fluid">
+                    <div class="control-group">
+                        <label class="control-label">Được xem</label>
+                        #if(xem_truoc){#
+                        <input type="checkbox" id="xem_truoc" value="true" checked name="xem_truoc" onchange="checkTextbox()" />
+                        #}else{#
+                            <input type="checkbox" id="xem_truoc" value="false" name="xem_truoc" onchange="checkTextbox()" />
+                        #}#
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="span5">
+                <div class="span12">
+                    <div class="control-group">
+                        <label class="control-label">Danh sách chi nhánh</label>
+                        <div class="controls">
+                            <select multiple="multiple" class="multi-select span12" id="multi_selectProductCategory" name="ma_chi_nhanh_id">
+                                @foreach (var item in ViewBag.listsChiNhanh)
+                                {
+                                    <option value="@item.id">@Html.Raw(item.ten_chi_nhanh)</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="form-actions right">
+            <a onclick="clearForm()" class="btn btn-xs">Hủy</a>
+            #if(id > 0){#
+            <a onclick="removeUser('#=id#')" class="btn btn-danger">Xóa</a>
+            #}#
+            <button type="submit" class="btn btn-info">Lưu</button>
+            <a onclick="saveAndClear()" class="btn btn-primary">Lưu &amp; Mới</a>
+        </div>
+
+    </form>
+</script>
+<div id="popup-confirm2" class="modal hide">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Thông báo</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <p>
+                <span>Bạn có chắc chắn muốn xóa dữ liệu</span>
+            </p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="Delete2(1)"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+<div id="popup-confirm" class="modal hide">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Thông báo</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <p>
+                <span>Bạn có chắc chắn muốn xóa dữ liệu</span>
+            </p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="Delete()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+<script>
+    function checkTextbox() {
+        if ($("#xem_truoc").prop("checked") == true) {
+            $("#xem_truoc").attr("checked", true);
+            $("#xem_truoc").val("true");
+        }
+        else {
+            $("#xem_truoc").attr("checked", false);
+            $("#xem_truoc").val("false");
+        }
+    }
+    function showConfirmPopup(e) {
+        if (e == 1) {
+            var listrowid = "";
+            $('#grid').find(".checkrowid").each(function () {
+                if ($(this).prop('checked') == true) {
+                    listrowid += $(this).attr("id") + '@@@@';
+                }
+            });
+            if (listrowid != "" && listrowid != null) {
+                deleteId = 1;
+                $("#divMaskPopup").show();
+                $('#popup-confirm2').modal('show');
+            }
+            else {
+                $.gritter.add({
+                    title: '',
+                    text: 'Vui lòng chọn dữ liệu',
+                    class_name: 'gritter-error'
+                });
+            }
+        }
+    }
+    function Delete2(key) {
+        if (deleteId == 1) {
+            var listrowid = "";
+            $('#grid').find(".checkrowid").each(function () {
+                if ($(this).prop('checked') == true) {
+                    listrowid += $(this).attr("id") + '@@@@';
+                }
+            });
+            if (listrowid != "" && listrowid != null) {
+                $.post(r + "/Article/DeleteList", { data: listrowid }, function (data) {
+                    if (data.success) {
+                        $.gritter.add({
+                            text: "Xóa thành công",
+                            class_name: 'gritter-success'
+                        });
+                        $("#grid").data("kendoGrid").dataSource.read();
+                    }
+                    else {
+                        $.gritter.add({
+                            text: data.error,
+                            class_name: 'gritter-error'
+                        });
+                    }
+                    $('#popup-confirm2').modal('hide');
+                });
+            }
+        }
+        else {
+        }
+    }
+    function checkAll(e) {
+        var x = $(e).prop('checked');
+        $("#grid").find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+    function loadForm(data) {
+        var EditTemplate = kendo.template($("#EditTemplate").html());
+        $(".formEdit").html(EditTemplate(data));
+        $('.FileUpload').ace_file_input({
+            no_file: 'chưa có file...',
+            btn_choose: 'Chọn',
+            btn_change: 'Thay đổi',
+            droppable: false,
+            onchange: null,
+            thumbnail: false
+        });
+        loadValidate(data);
+        $("#multi_selectProductCategory").multiSelect();
+        if (data.id > 0) {
+            var danh_sach_chi_nhanh = $.map(data.danh_sach_chi_nhanh, function (value, index) {
+                return [value];
+            });
+            $("#multi_selectProductCategory").val(danh_sach_chi_nhanh);
+            $("#multi_selectProductCategory").multiSelect('refresh');
+        }
+        $('select[name="loai_tin"]').val(data.loai_tin);
+    }
+    function loadValidate() {
+        $("#EditForm").validate({
+            rules: {
+                'tieu_de': { required: true },
+                'noi_dung': { required: true }
+            },
+            errorPlacement: function (error, element) {
+            },
+            submitHandler: function (form) {
+                $(form).ajaxSubmit({
+                    clearForm: false,
+                    success: function (data) {
+                        if (data.success) {
+                            $("#grid").data("kendoGrid").dataSource.read()
+                            $.gritter.add({
+                                text: "Lưu thành công",
+                                class_name: 'gritter-success'
+                            });
+                            if (reset) {
+                                reset = false;
+                                loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+                            }
+                        }
+                        else {
+                            $.gritter.add({
+                                text: data.error,
+                                class_name: 'gritter-error'
+                            });
+                        }
+
+                    }
+                });
+                return false;
+            }
+        });
+    }
+    function edit(e) {
+        var data = $("#grid").data("kendoGrid").dataItem($(e).closest("tr"));
+        $("#tabAdd").trigger("click");
+        $('#tabAdd').text('').append('Chỉnh sửa bản tin')
+        loadForm(data);
+    }
+    $("#tabList").bind('click', function () {
+        $('#tabAdd').text('').append('Thêm bản tin')
+    });
+    $("#tabAdd").bind('click', function () {
+        loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+    });
+    var reset = false;
+    function saveAndClear() {
+        reset = true;
+        $('#EditForm').submit();
+    }
+    var Id;
+    function removeUser(id) {
+        $('#popup-confirm').modal('show');
+        Id = id;
+    }
+    function Delete() {
+        $.post(r + "/Article/Delete", { id: Id }, function (data) {
+            if (data.success) {
+                $.gritter.add({
+                    text: "Xóa thành công",
+                    class_name: 'gritter-success'
+                });
+                $("#grid").data("kendoGrid").dataSource.read();
+                loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+            } else {
+                $.gritter.add({
+                    text: data.error,
+                    class_name: 'error-success'
+                });
+            }
+        })
+    }
+    function Databound() {
+        resizeGrid();
+    }
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+        dataArea = gridElement.find(".k-grid-content"),
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 25);
+    }
+    function filter(e) {
+        grid = $("#grid").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        var text = e.value;
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "tieu_de", operator: "contains", value: text });
+            filterOr.filters.push({ field: "noi_dung", operator: "contains", value: text });
+            filter.filters.push(filterOr);
+        }
+        grid.dataSource.filter(filter);
+        console.log(text)
+    }
+</script>
+
+
+

@@ -1,0 +1,350 @@
+﻿@using HDBank.Core.Entities
+@{
+    ViewBag.Title = "Tạo bảng tổng hợp";
+    var newData = new StatementHeader();
+}
+<script src="~/Scripts/autoNumeric-min.js"></script>
+<script src="~/Scripts/bootbox.min.js"></script>
+<script src="@Url.Content("~/Scripts/jquery.blockUI.js")"></script>
+
+<div class="row-fluid widget-box">
+    <div class="span12">
+        <div class="span2">
+            <input type="text" id="txtSearch" class="span12" placeholder="Mã phiếu, tên phiếu" onkeyup="filterPYC()" />
+        </div>
+        @*<div class="span3">
+            @(Html.Kendo().DropDownList()
+                        .Name("ma_don_vi")
+                        .DataTextField("ten_chi_nhanh")
+                        .DataValueField("ma_chi_nhanh")
+                        .HtmlAttributes(new { @style = "width:100%;" })
+                        .Filter("contains")
+                        .OptionLabel("Chọn CN/Phòng/Ban/PGD")
+                         .Events(e =>
+                        {
+                            e.Change("filterPYC");
+                        })
+                        .BindTo(ViewBag.listDonVi)
+            )
+        </div>*@
+        <div class="span2">
+            <input type="text" class="date-picker" placeholder="Từ ngày" name="from_date" id="from_date">
+        </div>
+        <div class="span2">
+            <input type="text" class=" date-picker" placeholder="Đến ngày" name="to_date" id="to_date">
+        </div>
+        <div class="span2">
+            <button type="button" id="btnSearch" class="btn btn-primary btn-small btnSearch" onclick="filterPYC()" style="float:none">Lọc dữ liệu</button>
+        </div>
+    </div>
+</div>
+<div class="row-fluid">
+    <div class="span12">
+        <div class="row-fluid">
+            <div class="col-sm-6">
+                <div class="row-fluid">
+                    @(Html.Kendo()
+                        .Grid<HDBank.Core.Entities.PRequestDetail>()
+                        .Name("gridPYC")
+                        .Columns(columns =>
+                        {
+                            columns.Bound(p => p.id).HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAll'  onClick='checkAll(this)' />")
+                                .ClientTemplate("<input style='text-align:center' class='checkrowid' type='checkbox' id='#=id#'/> ")
+                                .Width(25).Filterable(false).Title("").Sortable(false);
+
+                            columns.ForeignKey(p => p.ma_phieu, (System.Collections.IEnumerable)ViewBag.PORequestHeader, "ma_phieu", "ma_phieu").Title("Mã phiếu").Width(160);
+
+                            columns.ForeignKey(p => p.ma_san_pham, (System.Collections.IEnumerable)ViewBag.listProduct, "ma_san_pham", "ten_san_pham").Title("Tên vật tư").Width(160);
+                            columns.Bound(p => p.so_luong_duyet).Title("SL").Filterable(false).Width(75).Format("{0:N0}");
+                            columns.Bound(p => p.don_gia).Title("Đơn giá").Filterable(false).Width(180).Format("{0:N0}");
+                            columns.Bound(p => p.don_gia_vat).Title("Đơn giá VAT").Filterable(false).Width(180).Format("{0:N0}");
+                            columns.Bound(p => p.thanh_tien).Title("Chi phí").Filterable(false).Width(180).Format("{0:N0}");
+                            columns.Bound(p => p.thong_so_ky_thuat).Title("Thông tin kỹ thuật").Filterable(false).Width(220);
+                            columns.ForeignKey(p => p.ma_nha_cung_cap, (System.Collections.IEnumerable)ViewBag.Vendor, "nha_cung_cap_id", "ten_nha_cung_cap").Title("NCC").EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { columnname = "ma_nha_cung_cap" }).Width(160);
+                            columns.ForeignKey(p => p.ma_chi_nhanh, (System.Collections.IEnumerable)ViewBag.listDonVi, "ma_chi_nhanh", "ten_chi_nhanh").Title("CN/Phòng/Ban/PGD").EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { columnname = "ma_nha_cung_cap" }).Width(160);
+                            columns.Bound(p => p.noi_dung_xac_nhan_ton_kho).Title("Ý kiến xác nhận tồn kho").Filterable(false).Width(130).HtmlAttributes(new { columnname = "noi_dung_xac_nhan_ton_kho" });
+                            columns.Bound(p => p.noi_dung_xac_nhan_cap_3).Title("Ý kiến xác nhận cấp 3").Filterable(false).Width(130).HtmlAttributes(new { columnname = "noi_dung_xac_nhan_cap_3" });
+                            columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}");
+                            columns.Bound(p => p.nguoi_tao).Title("Người tạo").Filterable(false).Width(90);
+                            columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}");
+                            columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Filterable(false).Width(90);
+                            columns.Bound(p => p.don_gia).Hidden();
+                            columns.Bound(p => p.thue_vat).Hidden();
+                            columns.Bound(p => p.don_vi_tinh).Hidden();
+                            columns.Bound(p => p.ma_chinh_sach_gia).Hidden();
+
+                        })
+                         .ToolBar(toolbar =>
+                         {
+                         toolbar.Template(@<text>
+
+                                <div class="pull-left">
+                                    <a class="btn btn-info btn-mini" href="javascript:void(0)" onclick="Save()">
+                                        Tạo bảng tổng hợp
+                                    </a>
+                                </div>
+
+                            </text>);
+                         })
+                                .Sortable()
+                                .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+                                .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+                                .Pageable(p => p
+                                .Messages(m => m
+                                .Display("{0}-{1} của {2} dòng")
+                                .Empty("Không có dòng nào")
+                                .ItemsPerPage("dòng trên trang")
+                                .First("Trang kế")
+                                .Last("Trang tiếp")
+                                .Next("Đầu trang")
+                                .Previous("Cuối trang")
+                                )
+                                )
+                                .Scrollable()
+                                .Events(e =>
+                                {
+                                    e.DataBound("Databound");
+                                    e.Edit("onEdit");
+                                })
+                                .Editable(edit => edit.Mode(GridEditMode.InCell))
+                                .Navigatable()
+                                .Reorderable(r => r.Columns(true))
+                                .Resizable(r => r.Columns(true))
+                                .DataSource(dataSource => dataSource
+                                .Ajax()
+                                .PageSize(20)
+                                    //.Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+                                .Events(e =>
+                                {
+                                    e.Change("onChange");
+                                })
+                                .Model(model =>
+                                {
+                                    model.Id(p => p.id);
+                                    model.Field(m => m.ma_san_pham).Editable(false);
+                                    model.Field(m => m.ma_phieu).Editable(false);
+                                    model.Field(p => p.so_luong_duyet).Editable(false);
+                                    model.Field(p => p.don_gia_vat).Editable(false);
+                                    model.Field(p => p.ngay_tao).Editable(false);
+                                    model.Field(p => p.nguoi_tao).Editable(false);
+                                    model.Field(p => p.ngay_cap_nhat).Editable(false);
+                                    model.Field(p => p.nguoi_cap_nhat).Editable(false);
+                                    model.Field(p => p.ma_nha_cung_cap).Editable(false);
+                                    model.Field(p => p.thong_so_ky_thuat).Editable(true);
+                                    model.Field(p => p.noi_dung_xac_nhan_ton_kho).Editable(false);
+                                    model.Field(p => p.noi_dung_xac_nhan_cap_3).Editable(false);
+                                })
+                                .Read(read => read.Action("ReadPYC", "Statement"))
+                                ))
+                    <br />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        $('.date-picker').datepicker({ format: 'dd/mm/yyyy', autoclose: true, todayHighlight: true });
+    })
+    function Databound() {
+        resizeGrid();
+    }
+
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#gridPYC').offset().top);
+        var gridElement = $("#gridPYC"),
+        dataArea = gridElement.find(".k-grid-content"),
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 12);
+    }
+
+    function checkAll(e) {
+        var x = $(e).prop('checked');
+        $("#gridPYC").find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+
+    function filterPYC() {
+        grid = $("#gridPYC").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+
+        var text = $("#txtSearch").val();
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "ma_phieu", operator: "contains", value: text });
+            filter.filters.push(filterOr);
+        }
+
+        var donvi = $('#ma_don_vi').val();
+        if (donvi) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "ma_chi_nhanh", operator: "eq", value: donvi });
+            filter.filters.push(filterOr);
+        }
+
+        var from_date = $('#from_date').val();
+        if (from_date) {
+            var from = from_date.trim().split("/");
+            var startdate = new Date(from[2], from[1] - 1, from[0]);
+            filter.filters.push({ field: "ngay_tao", operator: "gte", value: kendo.toString(startdate, 'yyyy-MM-dd') });
+        }
+
+        var to_date = $('#to_date').val();
+        if (to_date) {
+            var to = to_date.trim().split("/");
+            var todate = new Date(to[2], to[1] - 1, to[0]);
+            todate.setDate(todate.getDate() + 1);
+            filter.filters.push({ field: "ngay_tao", operator: "lt", value: kendo.toString(todate, 'yyyy-MM-dd') });
+        }
+
+        grid.dataSource.filter(filter);
+        // }
+        console.log(text)
+    }
+
+    function checkAll(e) {
+        var x = $(e).prop('checked');
+        $("#gridPYC").find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+
+    function Save() {
+        var checked = false;
+        var details = [];
+        
+        blockUI(true);
+
+        $("#gridPYC").find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                checked = true;
+                var item = $('#gridPYC').data('kendoGrid').dataItem($(this).closest("tr"));
+                console.log(item);
+                details.push({
+                    id: item.id,
+                    ma_pyc_header: item.ma_phieu,
+                    ma_san_pham: item.ma_san_pham,
+                    so_luong: item.so_luong_duyet,
+                    thong_so_ky_thuat: item.thong_so_ky_thuat,
+                    ma_nha_cung_cap: item.ma_nha_cung_cap,
+                    don_gia_vat: item.don_gia_vat,
+                    don_gia: item.don_gia,
+                    thue_vat: item.thue_vat,
+                    don_vi_tinh: item.don_vi_tinh,
+                    ma_chinh_sach_gia: item.ma_chinh_sach_gia,
+                    ma_don_vi: item.ma_don_vi,
+                    ma_chi_nhanh: item.ma_chi_nhanh,
+                    noi_dung_xac_nhan_ton_kho: item.noi_dung_xac_nhan_ton_kho,
+                    noi_dung_xac_nhan_cap_3: item.noi_dung_xac_nhan_cap_3,
+                });
+            }
+        });
+
+
+        if (checked == false) {
+            $.gritter.add({
+                title: '',
+                text: 'Vui lòng chọn dữ liệu',
+                class_name: 'gritter-error'
+            });
+            return;
+        }
+
+        var data = new Object();
+        //debugger;
+        //data.ma_don_vi = $('#ma_don_vi').val();
+
+        $.ajax({
+            type: "POST",
+            async: false,
+            url: r + "/Statement/CreateUpdateNew",
+            data: { data: data, details: details },
+            success: function (data) {
+                if (data.success) {
+                    window.location = r + "/Statement/Edit?id=" + data.id;
+                }
+                else {
+                    $.gritter.add({
+                        title: '',
+                        text: data.error,
+                        class_name: 'gritter-error'
+                    });
+                }
+                blockUI(false);
+            }
+        });
+    }
+
+    function onEdit(e) {
+        var dataItem = $("#gridPYC").data('kendoGrid').dataItem($(e.container).closest("tr"));
+        var ma_san_pham = dataItem.ma_san_pham;
+        var so_luong = dataItem.so_luong;
+        var ma_nha_cung_cap = dataItem.ma_nha_cung_cap;
+
+        $.ajax({
+            type: "GET",
+            async: false,
+            url: r + "/PR/GetVendorByProduct",
+            data: { ma_san_pham: ma_san_pham },
+            success: function (data) {
+                if (data.success) {
+                    dataVender = data.data;
+                    $("#ma_nha_cung_cap").kendoDropDownList({
+                        dataSource: dataVender,
+                        dataTextField: "ten_nha_cung_cap",
+                        dataValueField: "nha_cung_cap_id",
+                        optionLabel: "Select ...",
+                        filter: "startswith",
+                    });
+                }
+            }
+        });
+    }
+
+    function onChange(e) {
+        //var model = $('#grid').data('kendoGrid').dataItem($(e.container).closest("tr"));
+        var model = e.items[0];
+        if (model != null) {
+
+            $.ajax({
+                type: "GET",
+                async: false,
+                url: r + "/PR/GetPriceByCGSVendor",
+                data: { ma_san_pham: model.ma_san_pham, so_luong: model.so_luong, ma_nha_cung_cap: model.ma_nha_cung_cap },
+                success: function (data) {
+                    if (data.success) {
+                        model.don_gia_vat = data.data.gia_bao_gom_vat;
+                        model.don_gia = data.data.gia_bao;
+                        model.thue_vat = data.data.thue_vat;
+                        model.don_vi_tinh = data.data.don_vi_tinh;
+                        model.ma_chinh_sach_gia = data.data.ma_chinh_sach_gia;
+                        
+                        $("#gridPYC").find("tr[data-uid='" + model.uid + "'] td:eq(4)").text(currency2String(data.data.gia_bao_gom_vat));
+                    }
+                }
+            });
+
+
+        }
+    }
+
+    function currency2String(value) {
+        return value.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,")
+    }
+
+    function blockUI(isMark) {
+        if (isMark) {
+            $(document).ajaxStart($.blockUI({ message: '<i class="fa fa-spinner fa-3x fa-lg fa-spin txt-color-blueDark"></i>', theme: false })).ajaxStop($.unblockUI);
+        }
+        else {
+            $(document).ajaxStart($.blockUI({ message: '<i class="fa fa-spinner fa-3x fa-lg fa-spin txt-color-blueDark"></i>', theme: false, overlayCSS: { backgroundColor: 'transparent' } })).ajaxStop($.unblockUI);
+        }
+    }
+</script>

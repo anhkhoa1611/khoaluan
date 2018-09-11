@@ -1,0 +1,346 @@
+﻿@using HPSTD.Helpers;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title - HPSTD</title>
+    <link href="@Url.Content("~/Images/logo2.png")" rel="shortcut icon" type="image/x-icon" />
+    <meta name="description" content="Common form elements and layouts" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link href="@Url.Content("~/Scripts/assets/css/bootstrap.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Scripts/assets/css/bootstrap-responsive.min.css")" rel="stylesheet" />
+    <link rel="stylesheet" href="@Url.Content("~/Scripts/assets/css/font-awesome.min.css")" />
+    @Styles.Render("~/Content/template")
+    @Styles.Render("~/Content/ace")
+
+    <!--[if IE 7]>s
+          <link rel="stylesheet" href="@Url.Content("~/Scripts/assets/css/font-awesome-ie7.min.css")" />
+        <![endif]-->
+    @Styles.Render("~/Content/kendo/2015.1.429/kendo")
+    <link href="@Url.Content("~/Content/customizekendo.css")" rel="stylesheet" type="text/css" />
+    <link href="@Url.Content("~/Content/mystyle.css")" rel="stylesheet" type="text/css" />
+    <!--[if lte IE 8]>
+          <link rel="stylesheet" href="@Url.Content("~/Scripts/assets/css/ace-ie.min.css")" />
+        <![endif]-->
+    <!--inline styles related to this page-->
+    <!--ace settings handler-->
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/jqueryui")
+    @Scripts.Render("~/bundles/ace")
+    @Scripts.Render("~/bundles/template")
+    @Scripts.Render("~/bundles/setting")
+    @Scripts.Render("~/bundles/layout")
+    @Scripts.Render("~/bundles/kendo")
+    @*<script src="@Url.Content("~/ckeditor/ckeditor.js")"></script>
+        <script src="~/ckfinder/ckfinder.js"></script>*@
+    @RenderSection("scripts", required: false)
+    <script>
+        var ROOT = '@Url.Content("~/")';
+        var r = ROOT.substring(0, ROOT.length - 1);
+    </script>
+    <script src="~/Scripts/kendo/2015.1.429/cultures/kendo.culture.vi-VN.min.js"></script>
+    <script src="~/Scripts/kendo/2015.1.429/cultures/kendo.culture.vi.min.js"></script>
+    <script type="text/javascript">
+        //set current to the "en-GB" culture script
+        kendo.culture("vi-VN");
+    </script>
+
+    @*<script src="~/signalr/hubs"></script>*@
+
+</head>
+<body ng-app="app" style="font-size: 12px;" class="no-skin">
+    <div class="navbar" id="navbar" style="min-height: 2px; background: #f59b38;"></div>
+    <div class="main-container" id="main-container">
+        <a class="menu-toggler" id="menu-toggler" href="#">
+            <span class="menu-text"></span>
+        </a>
+
+        <div id="sidebar" class="sidebar h-sidebar navbar-inner navbar-inverse " style="background-color: #22384d !important">
+            <script type="text/javascript">
+                try { ace.settings.check('sidebar', 'fixed') } catch (e) { }
+            </script>
+
+            <ul class="nav nav-list">
+                @{
+                    var listAllMenu = Utilities.getAllMenu();
+                    var listRoot = Utilities.getRootMenu();
+                    // bool xem = ViewBag.accessDetail != null ? ViewBag.accessDetail.xem : false;
+                }
+                <li>
+                    <a href="@Url.Content("~/")" style="padding:0px; background-color: white !important">
+                        <img style="height:49px;" src="@Url.Content("~/Images/logo4.png")" />
+                    </a>
+                    <b class="arrow"></b>
+                </li>
+                @foreach (var root in listRoot)
+                {
+                    //if(xem)
+                    //{
+                    var listItem = listAllMenu.Where(p => p.id_cha == root.id).OrderBy(p => p.thu_tu).ToList();
+                    if (String.IsNullOrEmpty(root.ma_man_hinh))
+                    {
+                        <li class="hover subLI">
+                            <a href="#" class="dropdown-toggle" controllername="@root.ma_man_hinh">
+                                @if (!String.IsNullOrEmpty(root.icon))
+                                {
+                                    <i class="@root.icon"></i>
+                                }
+                                else
+                                {
+                                    <i class=""></i>
+                                }
+                                <span class="menu-text"> @root.ten_chuc_nang </span>
+                                <b class="arrow fa fa-angle-down"></b>
+                            </a>
+                            <b class="arrow"></b>
+
+                            <ul class="submenu">
+                                @if (listItem.Count() > 0)
+                                {
+                                    foreach (var item in listItem)
+                                    {
+                                        var listItem2 = listAllMenu.Where(p => p.id_cha == item.id && p.cap == 2).OrderBy(p => p.thu_tu).ToList();
+                                        <li class="hover" controllername="@item.ma_man_hinh">
+                                            @if (!string.IsNullOrEmpty(item.ma_man_hinh))
+                                            {
+                                                <a href="@Url.Content("~/admin/" + item.ma_man_hinh )" style="padding-left:16px" controllername="@item.ma_man_hinh">
+                                                    <i class="icon-angle-right"></i>
+                                                    <span class="menu-text">@item.ten_chuc_nang</span>
+                                                </a>
+                                                <b class="arrow"></b>
+                                            }
+                                            else
+                                            {
+                                                <a href="#" class="dropdown-toggle" style="padding-left:16px" controllername="@item.ma_man_hinh">
+                                                    <i class="icon-angle-right"></i>
+                                                    @item.ten_chuc_nang
+                                                    <i class="icon-angle-right" style="float:right; padding-right:10px;"></i>
+                                                </a>
+                                                <b class="arrow"></b>
+                                            }
+
+                                            @if (listItem2.Count() > 0)
+                                            {
+                                                <ul class="submenu">
+
+                                                    @foreach (var item2 in listItem2)
+                                                    {
+                                                        <li class="hove" controllername="@item2.ma_man_hinh">
+                                                            <a href="@Url.Content("~/admin/" + item2.ma_man_hinh )" controllername="@item2.ma_man_hinh">
+                                                                <i class="icon-angle-right"></i>
+                                                                <span class="menu-text">@item2.ten_chuc_nang</span>
+                                                            </a>
+                                                            <b class="arrow"></b>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </li>
+                    }
+                    //}
+                }
+                <li  style="float: right;">
+                    <ul class="nav ace-nav pull-right" style="margin-bottom:0px;">
+
+                        <li>
+                            <a data-toggle="dropdown" href="@Url.Content("~/")" class="dropdown-toggle" style="color: #fbc710;">
+                                @{
+                                    string avartar = HPSTD.Models.User.Avatar();
+                                    if (!string.IsNullOrEmpty(avartar))
+                                    {
+                                        <img class="nav-user-photo" src="@Url.Content("~/Content/image/upload/" + avartar)" alt="Jason's Photo">
+                                    }
+                                    else
+                                    {
+                                        <img class="nav-user-photo" src="@Url.Content("~/Images/profile-pic.jpg")" alt="Jason's Photo">
+                                    }
+                                }
+
+                                <span class="user-info">
+                                    <span style="font-weight: bold">Xin chào,</span> <br />
+                                    <span>@User.Identity.Name</span>
+                                </span>
+                                <i class="icon-caret-down" style="font-size: 24px; color: #fbc710"></i>
+                            </a>
+                            <ul class="user-menu pull-right dropdown-menu dropdown-yellow dropdown-caret dropdown-closer">
+                                @*<li>
+                            <a href="@Url.Content("~/Account/ChangeProfile")">
+                                <i class="icon-user"></i>
+                                Thông tin cá nhân
+                            </a>
+                        </li>*@
+                                <li>
+                                    <a href="@Url.Content("~/Account/ChangePassword")">
+                                        <i class="icon-key"></i>
+                                        Thay đổi mật khẩu
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="javascript:void(0)">
+                                        <i class="icon-cog"></i>
+                                        Cài Đặt
+                                    </a>
+                                </li>
+                                @*<li class="divider"></li>*@
+                                <li>
+                                    <a href="@Url.Content("~/Account/LogOff")">
+                                        <i class="icon-off"></i>
+                                        Đăng Xuất
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <!--/.nav-list-->
+            @*<div class="sidebar-collapse" id="sidebar-collapse">
+                    <i class="icon-double-angle-left" data-icon1="icon-double-angle-left" data-icon2="icon-angle-right"></i>
+                </div>*@
+            @*            <script type="text/javascript">
+                try { ace.settings.check('sidebar', 'collapsed') } catch (e) { }
+                </script>*@
+        </div>
+
+
+
+        <div class="main-content">
+            <div class="breadcrumbs" id="breadcrumbs">
+                <ul class="breadcrumb">
+                    <li>
+                        <i class="icon-home home-icon"></i>
+                        <a href="@Url.Content("~/")">Trang chủ</a>
+                        @*<span class="divider">
+                                <i class="icon-angle-right arrow-icon"></i>
+                            </span>*@
+                    </li>
+                    <li class="active">@ViewBag.Title</li>
+                </ul>
+                <!--.breadcrumb-->
+                <div style="float:right; margin-right:10px;">
+                     <span style="color: blue; font-weight:bold"> @HPSTD.Models.User.GetBranchName()</span>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <div class="row-fluid">
+                    <div class="span12">
+                        <!--PAGE CONTENT BEGINS-->
+                        @RenderSection("Body", required: false)
+                        @RenderBody()
+                        <!--PAGE CONTENT ENDS-->
+                    </div>
+                    <!--/.span-->
+                </div>
+                <!--/.row-fluid-->
+                
+            </div>           
+            <!--/.page-content-->
+        </div>
+        <!--/.main-content-->
+    </div>
+    <!--/.main-container-->
+    <!--basic scripts-->
+    <script type="text/javascript">
+        if ("ontouchend" in document) document.write("<script src='@Url.Content("~/Scripts/assets/js/jquery.mobile.custom.min.js")'>" + "<" + "/script>");
+    </script>
+    <!--page specific plugin scripts-->
+    <!--[if lte IE 8]>
+          <script src="@Url.Content("~/Scripts/assets/js/excanvas.min.js")"></script>
+        <![endif]-->
+    @Scripts.Render("~/bundles/bootstrap")
+    <script src="@Url.Content("~/Scripts/jquery.validate.js")"></script>
+
+    <script type="text/javascript">
+        function updateValue(id, value) {
+            // this gets called from the popup window and updates the field with a new value
+            var jqueryObjectByClass = $(".cke_dialog_ui_input_text")[1];
+            jqueryObjectByClass.value = value;
+        }
+
+        function locdau(str) {
+            //code by Minit - www.canthoit.info - 13-05-2009
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+
+            str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+            str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+            str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+            str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+            str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+            str = str.replace(/Đ/g, "D");
+
+            str = str.replace(/!|\$|%|\^|\*|\(|\)|\+|\=|\<|\>|\?|,|\.|\:| |\"|\&|\#|\[|\]|~/g, " ");
+            str = str.replace(/-+-/g, "-"); //thay thế 2- thành 1-
+            str = str.replace(/^\-+|\-+$/g, "");//cắt bỏ ký tự - ở đầu và cuối chuỗi
+            return str;
+        }
+
+        var currentuserid = "@User.Identity.Name";
+        function loadMenu() {
+            var listAsset = "@HPSTD.Models.User.ListAsset()";
+            var data = listAsset.split(',');
+            if (data.indexOf("All") > -1) {
+                //console.log("Có vấn đề xảy ra.");
+            } else {
+                if (data.length > 0) {
+                    $("li[controllername]").each(function () {
+                        $(this).css("display", "none");
+                    });
+                    $("li[controllername]").each(function () {
+                        if (data.indexOf($(this).attr('controllername')) > -1) {
+                            $(this).css("display", "block");
+                        }
+                    });
+                    for (var i = 0; i < data.length; i++) {
+                        var a = $('[controllername=' + data[i] + ']');
+                        if (a.length > 0) {
+                            $(a).css('display', 'block');
+                            $(a).closest('.submenu').closest('li').css('display', 'block');
+                            $(a).closest('.submenu').closest('.submenu').closest('li').css('display', 'block');
+                        }
+                    }
+                }
+
+                $('.nav-list').find('.subLI').each(function () {
+                    var li = $(this).find('.submenu').find('li');
+                    var i = 0;
+                    $(this).find('.submenu').find('li').each(function () {
+                        if ($(this).css('display') == "none") {
+                            i++;
+                        }
+                    });
+                    if (li.length == i) {
+                        $(this).css('display', 'none');
+                    }
+                });
+            }
+        }
+        loadMenu();
+        var pathname = window.location.pathname.toLowerCase() + window.location.search.toLowerCase();
+        $('.nav-list a').each(function () {
+            if ($(this).attr("href").toLowerCase() == pathname) {
+                var parent = $(this).parent("li");
+                parent.addClass("active");
+                if (parent.parent("ul").parent("li").length > 0) {
+                    parent.parent("ul").parent("li").addClass("active open hover");
+                    if (parent.parent("ul").parent("li").parent("ul").parent("li").length > 0) {
+                        parent.parent("ul").parent("li").parent("ul").parent("li").addClass("active open hover");
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

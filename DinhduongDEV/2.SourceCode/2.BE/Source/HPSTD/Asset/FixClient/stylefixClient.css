@@ -1,0 +1,31 @@
+@media (min-width: 767px) {
+   .navbar-nav .dropdown-menu .caret { transform: rotate(-90deg);}
+}
+.navbar-collapse ul li{
+    display:inline-table;
+}
+.nav .hovermenu:hover>.dropdown-menu{
+        display: block;
+            margin-top: -2px;
+    }
+
+.nav .dropdown-menu {
+    left:20%;
+}
+.w3l_banner_nav_right {
+   width: 100%; 
+}
+.logo_products {
+    padding: 2.9em 0 0em;
+}
+.flex-control-nav {
+    display: block;
+    position: absolute;
+    left: 50%;
+    margin-left: 0px;
+    bottom: 70px;
+}
+.w3l_banner_nav_right_banner1, .w3l_banner_nav_right_banner, .w3l_banner_nav_right_banner2 {
+
+    margin-bottom: 0em;
+}

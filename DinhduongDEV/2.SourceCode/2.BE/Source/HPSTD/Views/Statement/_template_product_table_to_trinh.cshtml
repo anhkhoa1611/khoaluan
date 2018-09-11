@@ -1,0 +1,95 @@
+﻿@{
+    Layout = null;
+    int i = 0;
+    double tongcongthanhtien = 0;
+}
+<table cellpadding="2" cellspacing="0" style="vertical-align:bottom;font-family:Times New Roman; PADDING-LEFT:5pt; border-collapse:collapse;border:solid windowtext 1.0pt; width:120%; border-style:solid; margin-left:-100px; " border="1" ;>
+    <tbody>
+        <tr>
+            <td style="width:30px" class="tab_head" rowspan="2"><center><b>STT</b></center></td>
+            <td style="width:500px" class="tab_head" rowspan="2"><center><b>Đơn vị</b></center></td>
+            <td style="width:100px" class="tab_head" rowspan="2"><center><b>Ngày tờ trình</b></center></td>
+            <td style="width:200px" class="tab_head"><center><b>Hạng mục mua sắm</b></center></td>
+            <td style="width:100px" class="tab_head" rowspan="2"><center><b>ĐVT</b></center></td>
+            <td style="width:300px" class="tab_head" rowspan="2"><center><b>Số lượng</b></center></td>
+            <td width="150" class="tab_head"><center><b>Đơn giá (chưa VAT)</b></center></td>
+            <td width="150" class="tab_head"><center><b>Đơn giá (có VAT)</b></center></td>
+            <td width="150" class="tab_head"><center><b>Thành tiền (có VAT)</b></center></td>
+            <td width="300" class="tab_head" rowspan="2"><center><b>Thông tin NCC</b></center></td>
+            <td width="200" class="tab_head"><center><b>Thông tin hợp đồng/Báo giá</b></center></td>
+            <td width="300" class="tab_head" rowspan="2"><center><b>Thông tin khác</b></center></td>
+        </tr>
+        <tr>
+            <td width="200" class="tab_head"><center><b>Mặt hàng</b></center></td>
+            <td width="150" class="tab_head"><center><b>VNĐ</b></center></td>
+            <td width="150" class="tab_head"><center><b>VNĐ</b></center></td>
+            <td width="150" class="tab_head"><center><b>VNĐ</b></center></td>
+            <td width="200" class="tab_head"><center><b>Số HĐ, Ngày ký, Thời hạn HĐ</b></center></td>
+        </tr>
+        @if (ViewBag.listitem.Count > 0)
+        {
+            foreach (var item in ViewBag.listitem)
+            {
+                i += 1;
+                <tr>
+                    <td class="tdtxt">@i</td>
+                    <td width="200">
+                        <div class="txttable">@item.ten_don_vi</div>
+                    </td>
+                    <td width="200">
+                        <div class="txttable">@item.ma_pyc_header</div>
+                    </td>
+                    <td width="2000">
+                        <div class="txttable">@item.ten_san_pham</div>
+                    </td>
+                    <td width="100">
+                        @*Đơn vị tính*@
+                        <div class="txttable">@item.don_vi_tinh</div>
+                    </td>
+                    <td>
+                        @if (item.so_luong < 10)
+                        {
+                            <div class="txttable"><center><span>0</span>@item.so_luong</center></div>
+                        }
+                        else
+                        {
+                            <div class="txttable"><center>@item.so_luong</center></div>
+                        }
+                    </td>
+                    <td>
+                        <div style="float:right" class="txttable">@item.don_gia.ToString("#,###")</div>
+                    </td>
+                    <td>
+                        <div style="float:right" class="txttable">@item.don_gia_vat.ToString("#,###")</div>
+                    </td>
+                    <td>
+                        <div style="float:right" class="txttable">@item.thanh_tien.ToString("#,###")</div>
+                    </td>
+                    <td>
+                        <div class="txttable">@item.ten_nha_cung_cap</div>
+                    </td>
+                    <td width="200">
+                        @*Thông tin hợp đồng*@
+                        <div class="txttable">@item.thong_tin_hop_dong</div>
+                    </td>
+                    <td>
+                        @*Thông tin khác*@
+                        <div class="txttable"></div>
+                    </td>
+                </tr>
+                tongcongthanhtien += item.thanh_tien;
+            }
+            <tr>
+                <td></td>
+                <td colspan="7">Tổng cộng:</td>
+                <td>
+                    <div style="float:right" class="txttable">@tongcongthanhtien.ToString("#,###")</div>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        }
+
+    </tbody>
+</table>

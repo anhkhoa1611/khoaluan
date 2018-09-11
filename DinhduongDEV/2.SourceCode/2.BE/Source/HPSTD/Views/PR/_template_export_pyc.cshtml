@@ -1,0 +1,366 @@
+﻿@using HPSTD.Core.Entities;
+@{
+    Layout = null;
+    var ItemHeader = new PRequestHeader();
+    if (ViewBag.ItemHeader != null)
+    {
+        ItemHeader = ViewBag.ItemHeader;
+    }
+}
+<div id="body_print">
+    <style type="text/css">
+        .body-print {
+            margin: 0 auto;
+            font-size: 12pt;
+            color: #000;
+            margin: 0px auto;
+            max-width: 750px;
+            background-color: #fff;
+            padding-bottom: 50px;
+        }
+
+            .body-print div, .body-print p, .body-print td, .textdaudong p span {
+                font-family: "Times New Roman" !important;
+            }
+
+        .hiddenTable {
+            background-color: #fff;
+            border: 0.5pt solid #ccc;
+        }
+
+        .text_head {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .textheadh2 {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 2mm;
+            padding-top: 6px;
+        }
+
+        .mt-comments .mt-comment .mt-comment-img > img {
+            border-radius: 50% !important;
+        }
+
+        .mt-comments .mt-comment .mt-comment-body {
+            padding-left: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .textdaudong {
+            margin-left: 5mm;
+        }
+
+        .headertxt {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .tab_head {
+            text-align: left;
+        }
+
+        .tdtxt {
+            text-align: center;
+        }
+
+        #body_print p {
+            margin: 0 0 2px;
+        }
+
+        .left {
+            text-align: left;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .txttable {
+            margin-left: 5px !important;
+            margin-right: 5px !important;
+        }
+    </style>
+    <div style="text-align:justify;padding-bottom:100px" class="body-print">
+        <div class="text_head" id="print_header"></div>
+        <div>
+            <p>
+                <div style="float:left">
+                    <img src="@Url.Content("~/Images/logo.jpg")" style="display: block; width: 180px; height: 40px;" />
+                </div>
+                <div>
+                    <div class="text_head" style="font-size:10pt;padding-top:20px">Địa chỉ: 25Bis Nguyễn Thị Minh Khai, P.Bến Nghé, Q1, Tp.Hồ Chí Minh</div>
+                    <div class="text_head" style="font-size:10pt;">ĐT:(848) 62 915 916/Fax:(848) 62 915 900/Website:www.dhbank.com.vn</div>
+                </div>
+            </p>
+        </div>
+        <br />
+        <hr style="font-size:large" />
+        <div>
+            <p>
+                <div style="float:left">
+                    <div class="text_head" style="font-size:10pt;">Tên đơn vị: @ItemHeader.ten_chi_nhanh </div>
+                    <div class="text_head" style="font-size:10pt;float:left">Số: @ItemHeader.ma_phieu</div>
+                </div>
+                <div>
+                    <div class="" style="font-size:10pt;float:right">
+                        <i>
+                            Ngày
+                            @ItemHeader.ngay_tao_yeu_cau.ToString("dd") tháng
+                            @ItemHeader.ngay_tao_yeu_cau.ToString("MM") năm
+                            @ItemHeader.ngay_tao_yeu_cau.ToString("yyyy")
+                        </i>
+                    </div>
+                </div>
+            </p>
+        </div>
+        <br /> <br />
+        <div class="text_head" style="font-size:18pt; font-weight:bold;color:blue;"><center> GIẤY ĐỀ NGHỊ MUA SẮM </center></div>
+        <br />
+        <p style="padding-top:2px; margin:0"><strong>I.    Thông tin hàng hóa, tài sản (TS) đề nghị mua: </strong> <strong style="color:blue;"> </strong></p>
+        <p style="margin:0;"></p>
+        <br>
+        <div class="textdaudong" style="margin-top:3mm;">
+            <div>
+                @{
+                    string subWiewName = ViewBag.subWiewName;
+                    @Html.Partial(subWiewName);
+                }
+            </div>
+        </div>
+        <p style="padding-top:2px; margin:0">
+            <strong>II.   Mục đích mua sắm: </strong> <strong style="color:blue;"> </strong>
+        </p>
+        <p style="margin:0;"></p>
+        <p style="padding-top:2px; margin:0">
+            <strong>1.    Mua thay thế tài sản cũ: </strong>
+            <strong style="color:blue;"> </strong>
+            @if (ItemHeader.thay_the)
+            {
+                <input checked="checked" type="checkbox" />
+            }
+            else
+            {
+                <input type="checkbox" />
+            }
+        </p>
+        <div class="textdaudong" style="margin-top:3mm;">
+            <div>
+                <table cellpadding="2" cellspacing="0" style="vertical-align:bottom;font-family:Times New Roman; PADDING-LEFT:5pt; border-collapse:collapse;border:solid windowtext 1.0pt; width:100%; border-style:solid" border="1">
+                    <tbody>
+                        <tr>
+                            <td width="30" class="tab_head"><center><b>STT</b></center></td>
+                            <td width="150" class="tab_head"><center><b>THÔNG TIN TS CŨ</b></center></td>
+                            <td width="100" class="tab_head"><center><b>TS1</b></center></td>
+                            <td width="100" class="tab_head"><center><b>TS2</b></center></td>
+                            <td width="100" class="tab_head"><center><b>TS3</b></center></td>
+                        </tr>
+                        <tr>
+                            <td class="tdtxt">1</td>
+                            <td>
+                                <div>Mã tài sản tại HPSTD</div>
+                            </td>
+                            <td>
+                                <div>
+                                    @ItemHeader.tai_san_cu_1
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    @ItemHeader.tai_san_cu_2
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    @ItemHeader.tai_san_cu_3
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdtxt"></td>
+                            <td colspan="12">
+                                <div>
+                                    Lý do trình mua tài sản thay thế:
+                                    @ItemHeader.ly_do_thay_the
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <p style="padding-top:2px; margin:0">
+            <strong>2.    Mua phát sinh mới </strong>
+            <strong style="color:blue;"> </strong>
+            @if (ItemHeader.mua_moi)
+            {
+                <input checked="checked" type="checkbox" />
+            }
+            else
+            {
+                <input type="checkbox" />
+            }
+        </p>
+        <div class="textdaudong" style="margin-top:3mm;">
+            <div>
+                <table cellpadding="2" cellspacing="0" style="vertical-align:bottom;font-family:Times New Roman; PADDING-LEFT:5pt; border-collapse:collapse;border:solid windowtext 1.0pt; width:100%; border-style:solid" border="1">
+                    <tbody>
+                        <tr>
+                            <td width="30" class="tab_head"><center><b>STT</b></center></td>
+                            <td width="150" class="tab_head"><center><b> HẠN MỨC</b></center></td>
+                            <td width="300" class="tab_head"><center><b>SỐ LƯỢNG</b></center></td>
+                        </tr>
+                        <tr>
+                            <td class="tdtxt">1</td>
+                            <td>
+                                <div>Định biên nhân sự của bộ phận sử dụng tài sản</div>
+                            </td>
+                            <td>
+                                <div>
+                                    @ItemHeader.so_luong_dinh_bien_nhan_su.ToString("#,###")
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdtxt">2</td>
+                            <td>
+                                <div>Định mức tài sản cùng loại được giao sử dụng</div>
+                            </td>
+                            <td>
+                                <div>
+                                    @ItemHeader.so_luong_dinh_muc.ToString("#,###")
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tdtxt">3</td>
+                            <td colspan="12">
+                                <div>
+                                    Lý do trình mua thêm tài sản:
+                                    @ItemHeader.ly_do_mua_them
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <p style="margin:0;"></p>
+        <p style="padding-top:2px; margin:0"><strong>III.    Xác nhận tình trạng tài sản cũ: </strong> <strong style="color:blue;"> </strong></p>
+        <p style="margin:0;"><i>(Thực hiện trong trường hợp mua thay thế tài sản cũ)</i></p>
+        <div class="textdaudong" style="margin-top:3mm;">
+            <div>
+                <table cellpadding="2" cellspacing="0" style="vertical-align:bottom;font-family:Times New Roman; PADDING-LEFT:5pt; border-collapse:collapse;border:solid windowtext 1.0pt; width:100%; border-style:solid" border="1">
+                    <tbody>
+                        <tr>
+                            <td width="30" class="tab_head"><b>Ý kiến IT/HC tại đơn vị</b></td>
+                        </tr>
+                        <tr>
+                            <td class="tdtxt">
+                                
+                                <p style="padding-top:2px;">.........................................................................................................................................................................</p>
+                                <p style="padding-top:2px;">.........................................................................................................................................................................</p>
+                                <p style="padding-top:2px;">.........................................................................................................................................................................</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            <br />
+            <div>
+                <div class="ng-left" style="float:left; width:50%;">
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; <strong>NGƯỜI LẬP ĐỀ NGHỊ</strong>
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <p style="padding-top:2px;    padding-left: 70px; margin:0">
+                        @ItemHeader.ten_nguoi_lap_de_nghi
+                    </p>
+                    <br />
+                    <p>
+                        &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Số ĐT liên lạc: @ItemHeader.so_dt_lien_lac_nguoi_lap</i>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                    </p>
+                    <p>
+                        &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Tên, số ĐT người nhận hàng: @ItemHeader.ten_nguoi_nhan_hang&nbsp;&nbsp;-&nbsp;&nbsp;@ItemHeader.dt_nguoi_nhan_hang</i>
+                    </p>
+                    <p>
+                        &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Địa chỉ nhận hàng: @ItemHeader.dia_chi_nhan_hang</i>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                        &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp;
+                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                    </p>
+                </div>
+                <div class="ng-left" style="float:right; width:50%;">
+                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>XÁC NHẬN CỦA TRƯỞNG ĐƠN VỊ</strong>
+                    <br />
+                    <p>
+                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<i>(Ký, ghi họ tên và đóng dấu)</i> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                    </p>
+                    <p>
+                        &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<i>@ItemHeader.y_kien_cua_don_vi</i> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                    </p>
+                    <br />
+                    <br />
+                    <p style="padding-top:2px;    padding-right: 90px; margin:0">
+                        
+                        &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<i> @ItemHeader.ten_nguoi_duyet_TDV</i>
+                    </p>
+                    <br />
+                    <p>
+                        &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>Ngày duyệt: @ItemHeader.ngay_duyet_TDV</i>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                    </p>
+                </div>
+            </div>
+            <br />
+            <br />
+            
+        </div>
+        <div style="padding-top: 200px;">
+            <p style="padding-top:2px;    padding-left: 80px; margin:0"><strong>1.    Ý kiến của phòng ban nghiệp vụ liên quan </strong> <strong style="color:blue;"> </strong></p>
+            <p style="padding-top:2px;     padding-left: 120px;margin:0"><strong>1.1.P.HCQT(nếu có)</strong> <strong style="color:blue;"> </strong></p>
+            <p style="padding-top:2px;    padding-left: 80px">@ItemHeader.y_kien_HCQT</p>
+            <p style="padding-top:2px;    padding-left: 80px">@ItemHeader.ten_nguoi_duyet_HCQT.............................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px; padding-left: 120px;margin:0"><strong>1.2.Khối CNTT&amp;NHĐT (nếu có)</strong> <strong style="color:blue;"> </strong></p>
+            <p style="padding-top:2px;    padding-left: 80px">@ItemHeader.y_kien_TTCNTT_NHDT</p>
+            <p style="padding-top:2px;    padding-left: 80px">@ItemHeader.ten_nguoi_duyet_TTCNTT_NHDT......................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px; padding-left: 120px;margin:0"><strong>1.3.P.QLDVKH&amp;NQ (nếu có)</strong> <strong style="color:blue;"> </strong></p>
+            <p style="padding-top:2px;    padding-left: 80px;">@ItemHeader.y_kien_QLDVKH_NQT</p>
+            <p style="padding-top:2px;    padding-left: 80px">@ItemHeader.ten_nguoi_duyet_QLDVKH_NQT.......................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px; padding-left: 120px;margin:0"><strong>1.4.P.PTML&amp;XDCB (nếu có)</strong> <strong style="color:blue;"> </strong></p>
+            <p style="padding-top:2px;    padding-left: 80px;"></p>
+            <p style="padding-top:2px;    padding-left: 80px">........................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px; padding-left: 120px;margin:0"><strong>1.5.Đơn vị HO khác (nếu có)</strong> <strong style="color:blue;"> </strong></p>
+            <p style="padding-top:2px;    padding-left: 80px">@ItemHeader.y_kien_khac_HO</p>
+            <p style="padding-top:2px;    padding-left: 80px">@ItemHeader.ten_nguoi_duyet_khac_HO..........................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <br />
+            <p style="padding-top:2px;    padding-left: 80px; margin:0"><strong>2.    Phê duyệt </strong> <strong style="color:blue;"> </strong></p>
+            <p style="padding-top:2px;     padding-left: 120px;margin:0"><strong>2.1. Giám đốc tài chính</strong> <strong style="color:blue;"> </strong></p>
+            <p style="padding-top:2px;    padding-left: 80px">@ItemHeader.y_kien_GDTC</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px; padding-left: 120px;margin:0"><strong>2.2. Tổng giám đốc</strong> <strong style="color:blue;"> </strong></p>
+            <p style="padding-top:2px;    padding-left: 80px">@ItemHeader.y_kien_TGD</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+            <p style="padding-top:2px;    padding-left: 80px">.........................................................................................................................................................................</p>
+
+        </div>
+    </div>
+</div>

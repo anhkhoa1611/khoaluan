@@ -1,0 +1,203 @@
+﻿@using HDBank.Core.Entities;
+@{
+    Layout = null;
+    var ItemHeader = new StatementHeader();
+    if (ViewBag.ItemHeader != null)
+    {
+        ItemHeader = ViewBag.ItemHeader;
+    }
+}
+<div id="body_print">
+    <style type="text/css">
+        .body-print {
+            margin: 0 auto;
+            font-size: 10pt;
+            color: #000;
+            margin: 0px auto;
+            max-width: 860px;
+            background-color: #fff;
+            padding-bottom: 50px;
+        }
+
+            .body-print div, .body-print p, .body-print td, .textdaudong p span {
+                font-family: "Times New Roman" !important;
+            }
+
+        .hiddenTable {
+            background-color: #fff;
+            border: 0.5pt solid #ccc;
+        }
+
+        .text_head {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .textheadh2 {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 2mm;
+            padding-top: 6px;
+        }
+
+        .mt-comments .mt-comment .mt-comment-img > img {
+            border-radius: 50% !important;
+        }
+
+        .mt-comments .mt-comment .mt-comment-body {
+            padding-left: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .textdaudong {
+            margin-left: 5mm;
+        }
+
+        .headertxt {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .tab_head {
+            text-align: left;
+        }
+
+        .tdtxt {
+            text-align: center;
+        }
+
+        #body_print p {
+            margin: 0 0 2px;
+        }
+
+        .left {
+            text-align: left;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .txttable {
+            margin-left: 5px !important;
+            margin-right: 5px !important;
+        }
+
+    </style>
+    <div style="padding:0 40px; text-align:justify;padding-bottom:100px" class="body-print">
+        @*<div class="text_head" id="print_header" style="height:60px;"></div>*@
+        <div>
+            <p>
+                @*<div style="float:left">
+                    <img src="@Url.Content("~/Images/logo.jpg")" style="display: block; width: 180px; height: 40px;" />
+                </div>*@
+                @*<div>
+                    <div class="text_head" style="font-size:10pt;padding-top:20px">Địa chỉ: 25Bis Nguyễn Thị Minh Khai, P.Bến Nghé, Q1, Tp.Hồ Chí Minh</div>
+                    <div class="text_head" style="font-size:10pt;">ĐT:(848) 62 915 916/Fax:(848) 62 915 900/Website:www.dhbank.com.vn</div>
+                </div>*@
+            </p>
+        </div>
+        <br />
+        @*<hr style="font-size:large" />*@
+        <div>
+            <p>
+                <div style="float:left">
+                    @*<div class="text_head" style="font-size:10pt;">Tên đơn vị: @ItemHeader.ten_don_vi </div>*@
+                    @*<div class="text_head" style="font-size:10pt;float:left">Số: @ItemHeader.ma_phieu</div>*@
+                </div>
+                <div>
+                    <div class="" style="font-size:10pt;float:right">
+                        <i>
+                            @*Tp.Hồ Chí Minh, ngày
+                            @ItemHeader.ngay_tao_yeu_cau.ToString("dd") tháng
+                            @ItemHeader.ngay_tao_yeu_cau.ToString("MM") năm
+                            @ItemHeader.ngay_tao_yeu_cau.ToString("yyyy")*@
+                        </i>
+                    </div>
+                </div>
+            </p>
+        </div>
+        <div style="float:left;margin-left: -50px;">
+            <img src="@Url.Content("~/Images/logo.jpg")" style="display: block; width: 180px; height: 40px;" />
+        </div>
+        <div class="text_head" style="font-size:14pt; font-weight:bold;color:blue;"><center> BẢNG TỔNG HỢP TỜ TRÌNH CHỦ TRƯƠNG MUA SẮM </center></div>
+        <br />
+        <div class="text_head" style="font-size:10pt; font-weight:bold;color:#000;"><center><i> (KIÊM BẢNG TỔNG HỢP CHI PHÍ MUA SẮM) </i></center></div>
+        <br />
+        <div class="text_head" style="font-size:10pt; font-weight:bold;color:#000;"><center><i> Ngày báo cáo:</i> @ItemHeader.ngay_tao_yeu_cau.ToString("dd/MM/yyyy") </center></div>
+        <br />
+        <div class="text_head" style="font-size:10pt; font-weight:bold;color:#000;"><center><i> Tên phiếu:</i> @ItemHeader.ten_phieu </center></div>
+        <p style="margin:0;"></p>
+        <br>
+        
+        @*<p style="padding-top:2px; margin:0">
+            <strong> <i>- Căn cứ như cầu sử dụng thực tế </i></strong>
+        </p>
+        <br />
+        <p style="padding-top:2px; margin:0"> 
+            Phòng @ItemHeader.ten_don_vi kính trình Tổng Giám đốc phê duyệt mua sắm thiết bị phục vụ cho công việc của phòng. Chi tiết như sau:
+        </p>
+        <br />
+        <p style="margin:0;"></p>
+        <p>
+            <strong>- Danh mục thiết bị đề xuất mua sắm</strong>
+        </p>
+        <br />*@
+        <div class="textdaudong" style="margin-top:3mm;">
+            <div>
+                @{
+                    string subWiewName = ViewBag.subWiewName;
+                    @Html.Partial(subWiewName);
+                }
+            </div>
+        </div>
+        <br />
+        @*<div class="textdaudong" style="margin-top:3mm;">
+            <div>
+                <table cellpadding="2" cellspacing="0" style="vertical-align:bottom;font-family:Times New Roman; border-collapse:collapse;border:solid windowtext 1.0pt; width:100%; border-style:solid" border="1">
+                    <tbody>
+                        <tr>
+                            <td width="30" class="tab_head"><center><b>STT</b></center></td>
+                            <td width="150" class="tab_head"><center><b>Thiết bị</b></center></td>
+                            <td width="100" class="tab_head"><center><b>Quy cách, thông số kỹ thuật, nhà sản xuất...</b></center></td>
+                            <td width="100" class="tab_head"><center><b>Số lượng</b></center></td>
+                            <td width="100" class="tab_head"><center><b>Mục đích sử dụng</b></center></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>*@
+        @*<p style="padding-top:2px; margin:0">
+           - Giao cho BPMS thực hiện theo qui định.
+        </p>
+        <br />*@
+        <p style="padding-top:2px; margin:0">   
+            <b>Ghi chú:</b> Đính kèm Tờ trình, giấy đề nghị, phiếu yêu cầu của đơn vị, báo giá & HĐ nguyên tắc
+        </p>
+        <br />
+        <p style="padding-left:2px; margin:0">
+            <b>NGƯỜI LẬP</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
+            &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
+            <b>BỘ PHẬN MUA SẮM</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
+            &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;
+            <b>GĐ KHỐI VẬN HÀNH</b>
+        </p>
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <p style="padding-left:2px; margin:0">
+            <b>PHÒNG KTTC</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
+            &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
+            <b>GIÁM ĐỐC TÀI CHÍNH</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;
+            &nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;&nbsp;
+            <b>TỔNG GIÁM ĐỐC</b>
+        </p>
+       
+    </div>
+</div>

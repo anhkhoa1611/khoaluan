@@ -1,0 +1,470 @@
+﻿@using HPSTD.Core.Entities;
+@{
+    bool xem = ViewBag.accessDetail != null ? ViewBag.accessDetail.xem : false;
+    bool sua = ViewBag.accessDetail != null ? ViewBag.accessDetail.sua : false;
+    bool them = ViewBag.accessDetail != null ? ViewBag.accessDetail.them : false;
+    bool xoa = ViewBag.accessDetail != null ? ViewBag.accessDetail.xoa : false;
+    bool xuat = ViewBag.accessDetail != null ? ViewBag.accessDetail.xuat : false;
+    bool nhap = ViewBag.accessDetail != null ? ViewBag.accessDetail.nhap : false;
+
+    ViewBag.Title = "Phân quyền cấp duyệt";
+    var listActive = new List<SelectListItem>
+    {
+        new SelectListItem{Text = "Hoạt động", Value = "true"},
+        new SelectListItem{Text = "Ngưng hoạt động", Value = "false"},
+    };
+
+    ViewBag.listActive = listActive;
+
+}
+<style>
+    .k-alt .editable {
+        background-color: #C8E6C9;
+        color: black;
+    }
+
+    .editable {
+        background-color: #E8F5E9;
+        color: black;
+    }
+</style>
+
+<link href="~/Content/assets/global/plugins/jquery-multi-select/css/multi-select.css" rel="stylesheet" />
+<script src="~/Content/assets/global/plugins/jquery-multi-select/js/jquery.multi-select.js"></script>
+
+
+<div class="row-fluid widget-box">
+    <div class="span12">
+        <div class="span4">
+            <input type="text" class="span12" placeholder="Tên cấp duyệt" onkeyup="filter(this)" />
+        </div>
+    </div>
+</div>
+<div class="row-fluid">
+    @(Html.Kendo().Grid<HPSTD.Core.Entities.ApproveLevel>()
+        .Name("grid")
+        .Columns(columns =>
+        {
+            columns.Bound(p => p.id)
+               .HeaderTemplate("<input type='checkbox' id= 'checkboxcheckAll'  onClick='checkAll(this)' />")
+               .ClientTemplate("<input class='checkid' type='checkbox' id='#=id#'/> ")
+               .Width(25).Filterable(false).Sortable(false).HtmlAttributes(new { style = "text-align:center" });
+            columns.Template(@<text></text>).HtmlAttributes(new { style = "text-align: center;" }).ClientTemplate("<span ><a class='btn btn-mini btn-warning' style ='width:90px' onclick='onOpenPopup(this)'> Phân quyền </a></span>").Width(120);
+            columns.ForeignKey(p => p.cap_duyet, (System.Collections.IEnumerable)ViewBag.listCapDuyet, "ma_tham_so", "gia_tri").Title("Cấp duyệt").Width(120).EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { @class = "editable" });
+            columns.Bound(p => p.ten_cap_duyet).Width(280).Title("Tên cấp duyệt").HtmlAttributes(new { @class = "editable" });
+            columns.ForeignKey(p => p.ma_nhom_chuyen_mon, (System.Collections.IEnumerable)ViewBag.listChuyenMon, "ma_tham_so", "gia_tri").Title("Nhóm chuyên môn").Width(250).EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { @class = "editable" });
+            columns.Bound(p => p.danh_sach_nguoi_dung).Width(350).Title("Người dùng thuộc nhóm").HtmlAttributes(new { data_id = "#=id#", onclick = "onOpenPopup(this)", @class = "editable", @style = "cursor:pointer;text-decoration:underline" });
+            columns.ForeignKey(p => p.trang_thai, (System.Collections.IEnumerable)ViewBag.listActive, "Value", "Text").Title("Trạng thái").Width(120).EditorTemplateName("GridNullableForeignKey").HtmlAttributes(new { @class = "editable" });
+            columns.Bound(p => p.ghi_chu).Width(250).Title("Ghi chú").HtmlAttributes(new { @class = "editable" });
+            columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+            columns.Bound(p => p.nguoi_tao).Title("Người tạo").Width(90);
+            columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+            columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Width(90);
+        })
+        .Scrollable()
+        .ToolBar(toolbar =>
+        {
+            toolbar.Template(@<text>
+        <div class="pull-left">
+            @if (them)
+            {
+                <a class="btn btn-success btn-mini" href="javascript:void(0)" id="btnGridAddDetail" onclick="Add()">Thêm</a>
+            }
+            @if (sua)
+            {
+                <a class="btn btn-primary btn-mini" href="javascript:void(0)" id="btnGridSaveDetail" onclick="Save()">Lưu</a>
+            }
+            @if (them || sua)
+            {
+                <a class="btn btn-default btn-mini" href="javascript:void(0)" id="btnGridCancelDetail" onclick="Cancel()">Hủy</a>
+            }
+            @if (xoa)
+            {
+                <a class="btn btn-danger btn-mini" href="javascript:void(0)" id="btnGridDeleteDetail" onclick="showConfirmPopup()">Xóa</a>
+            }
+        </div>
+            </text>);
+        })
+        .Editable(editable => editable.Mode(GridEditMode.InCell))
+        .Pageable(pager => pager.PageSizes(new[] { 100, 200, 300, 500 }))
+        .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+        .Pageable(p => p
+            .Messages(m => m
+                .Display("{0}-{1} của {2} dòng")
+                .Empty("Không có dòng nào")
+                .ItemsPerPage("dòng trên trang")
+                .First("Trang kế")
+                .Last("Trang tiếp")
+                .Next("Đầu trang")
+                .Previous("Cuối trang")
+            )
+        )
+        .Events(e => e.DataBound("Databound"))
+        .Reorderable(reorderable => reorderable.Columns(true))
+        .Resizable(resizable => resizable.Columns(true))
+        .DataSource(dataSource => dataSource
+            .Ajax()
+            .Batch(true)
+            .PageSize(100)
+            .Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+            .Model(model =>
+            {
+                model.Id(p => p.id);
+                model.Field(p => p.id).Editable(false);
+                model.Field(p => p.trang_thai).DefaultValue("true");
+                model.Field(p => p.ngay_cap_nhat).Editable(false);
+                model.Field(p => p.danh_sach_nguoi_dung).Editable(false);
+                model.Field(p => p.ngay_tao).Editable(false);
+                model.Field(p => p.nguoi_tao).Editable(false);
+                model.Field(p => p.nguoi_cap_nhat).Editable(false);
+            })
+        .Read(c => c.Action("Read", "ApproveLevel"))
+        .Create(c => c.Action("Create", "ApproveLevel"))
+        .Update(c => c.Action("Update", "ApproveLevel"))
+        ))
+</div>
+
+
+<div id="popup-selectUser" class="modal hide" tabindex="-1">
+    <form action=@Url.Action("CreateUpdate", "ApproveLevel") id="EditForm" method="post" enctype="multipart/form-data" style="margin:0px">
+        <div class="k-window-titlebar k-header">
+            <span class="k-window-title" id="title-process">Cập nhật người dùng</span>
+            @*<button type="button" class="btclose" data-dismiss="modal">&times;</button>*@
+        </div>
+        <div class="selectUsers"></div>
+
+        <div class="modal-footer">
+            <button class="btn btn-info btn-small" id="btnUpdateApproveLevelUsers" onclick="UpdateApproveLevelUsers()">Lưu</button>
+            <a class="btn btn-default btn-small" data-dismiss="modal">Hủy</a>
+        </div>
+    </form>
+</div>
+
+<script type="text/template" id="EditTemplate">
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid">
+            <input type="hidden" id="id" name="id" />
+            <input type="hidden" id="ma_nhom_chuyen_mon" name="ma_nhom_chuyen_mon" />
+            <div class="control-group">
+                <label class="control-label">Chức vụ</label>
+                <div class="controls">
+                    <select name="select" id="listChucVu" style="width:550px !important" onchange="doSearch()" data-placeholder="Chọn chức vụ..." multiple>
+                        <option value=""></option>
+                        @foreach (var item in ViewBag.listChucVu)
+                        {
+                            <option value="@item.ma_tham_so">@Html.Raw(item.gia_tri)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Đơn vị</label>
+                <div class="controls">
+                    <select name="select" id="listDonVi" style="width:550px !important" onchange="doSearch()" data-placeholder="Chọn đơn vị..." multiple>
+                        <option value=""></option>
+                        @foreach (var item in ViewBag.listDonVi)
+                        {
+                            <option value="@item.ma_chi_nhanh">@Html.Raw(item.ten_chi_nhanh)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Danh sách người dùng</label>
+                <div class="controls">
+                    <select multiple="multiple" class="multi-select" id="multi_selectUserInBranch" name="lstnguoi_dung">
+                        @foreach (var item in ViewBag.listNguoiDung)
+                        {
+                            <option value="@item.ma_nguoi_dung">@Html.Raw(item.ten_nguoi_dung)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<div id="popup-confirm" class="modal hide">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Thông báo</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <p>
+                <span>Bạn có chắc chắn muốn xóa dữ liệu?</span>
+            </p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="Delete()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+<script>
+
+    $(document).ready(function () {
+    
+        $("#EditForm").validate({
+            rules: {
+            },
+            messages: {
+            },
+            errorPlacement: function (error, element) {
+                error.insertAfter(element);
+            },
+            submitHandler: function (form) {
+
+                $(form).ajaxSubmit({
+                    clearForm: true,//To clear form after ajax submitting
+                    success: function (data) {
+                        $('#popup-selectUser').modal('hide');
+                        $("#grid").data("kendoGrid").dataSource.read();
+                        if (data.success) {
+                            $.gritter.add({
+                                title: '',
+                                text: "Lưu thành công!",
+                                class_name: 'gritter-success'
+                            });
+                        }
+                        else {
+                            $.gritter.add({
+                                title: '',
+                                text: "Báo lỗi" + data.error,
+                                class_name: 'gritter-error'
+                            });
+                        }
+                    }
+                });
+                return false;
+            }
+        });
+    })
+
+    var selectUserInBranch;
+
+    function onOpenPopup(obj) {
+        var currentRow = $(obj).closest("tr");
+        var dataItem = $("#grid").data("kendoGrid").dataItem(currentRow);
+
+        var EditTemplate = kendo.template($("#EditTemplate").html());
+        $(".selectUsers").html(EditTemplate({}));
+
+
+        onBindDataToForm(dataItem);
+
+        debugger;
+        $.ajax({
+            type: "POST",
+            async: false,
+            url: r + "/ApproveLevel/GetUserApprovelevelByID",
+            data: { id_cap_duyet: dataItem.id },
+
+            success: function (data) {
+                if (data.success) {
+                    $("#multi_selectUserInBranch").multiSelect();
+                    selectUserInBranch = $.map(data.data, function (value, index) {
+                        return [value];
+                    });
+                    $("#multi_selectUserInBranch").val(selectUserInBranch);
+                    $("#multi_selectUserInBranch").multiSelect('refresh');
+                }
+            }
+        });
+
+        $("#popup-selectUser").modal('show');
+        $("#listChucVu").chosen();
+        $("#listDonVi").chosen();
+        $("#listNguoiDung").chosen();
+
+    }
+
+    function onBindDataToForm(dataItem) {
+        for (var propName in dataItem) {
+            if (dataItem[propName] != null && dataItem[propName].constructor.toString().indexOf("Date") > -1) {
+                var d = kendo.toString(kendo.parseDate(dataItem[propName]), 'dd/MM/yyyy')
+                if (d != '01/01/1900') {
+                    $("#" + propName).val(d);
+                }
+            }
+            else {
+                $("#" + propName).val(dataItem[propName]);
+            }
+        }
+    }
+
+    function UpdateApproveLevelUsers() {
+        $("#EditForm").submit();
+    };
+
+    function Delete() {
+        var listrowid = "";
+        $('#grid').find(".checkid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+            $.post(r + "/ApproveLevel/Delete", { data: listrowid }, function (data) {
+                if (data.success) {
+                    $.gritter.add({
+                        text: "Xóa dữ liệu thành công",
+                        class_name: 'gritter-success'
+                    });
+                    $('#grid').data("kendoGrid").dataSource.read();
+                }
+                else {
+                    $.gritter.add({
+                        text: data.error,
+                        class_name: 'gritter-error'
+                    });
+                }
+                $('#popup-confirm').modal('hide');
+            });
+        }
+        else {
+            $.gritter.add({
+                text: "Vui lòng chọn dòng dữ liệu muốn xóa.",
+                class_name: 'gritter-error'
+            });
+        }
+    }
+    function Add() {
+        $("#grid").data("kendoGrid").dataSource.insert();
+    }
+    function Save() {
+        if ($('#grid').data('kendoGrid').dataSource.hasChanges() == true) {
+            $('#grid').data('kendoGrid').saveChanges();
+        }
+    }
+    function Cancel() {
+        $("#grid").data("kendoGrid").dataSource.cancelChanges();
+    }
+    function showConfirmPopup() {
+        var listrowid = "";
+        $("#grid").find(".checkid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+            $("#divMaskPopup").show();
+            $('#popup-confirm').modal('show');
+        }
+        else {
+            $.gritter.add({
+                title: '',
+                text: 'Bạn chưa chọn dữ liệu. Vui lòng chọn dữ liệu liệu muốn xóa.',
+                class_name: 'gritter-error'
+            });
+        }
+    }
+
+    function error_handler(e) {
+        if (e.errors) {
+            var message = "\n";
+            $.each(e.errors, function (key, value) {
+                if ('errors' in value) {
+                    $.each(value.errors, function () {
+                        message += this + "\n";
+                    });
+                }
+            });
+            $.gritter.add({
+                text: message,
+                class_name: 'gritter-error'
+            });
+        }
+    }
+    function onRequestEnd(e) {
+        if (e.type == "update" || e.type == "create" || e.type == "delete") {
+            if (!e.response.Errors) {
+                $.gritter.add({
+                    title: '',
+                    text: 'Lưu dữ liệu thành công',
+                    class_name: 'gritter-success'
+                });
+                $("#grid").data("kendoGrid").dataSource.read()
+            }
+
+        }
+    }
+    function checkAll(e) {
+        var x = $(e).prop('checked');
+        $("#grid").find(".checkid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function Databound(e) {
+        var grid = this;
+        resizeGrid();
+        var requestObject = (new kendo.data.transports["aspnetmvc-server"]({ prefix: "" }))
+        .options.parameterMap({
+            page: grid.dataSource.page(),
+            sort: grid.dataSource.sort(),
+            filter: grid.dataSource.filter()
+        });
+        var $exportLink = $('.export');
+        var href = $exportLink.attr('href');
+        if (href) {
+            href = href.replace(/filter=([^&]*)/, 'filter=' + (requestObject.filter || '~'));
+            $exportLink.attr('href', href);
+        }
+    }
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+            dataArea = gridElement.find(".k-grid-content"),
+            otherElements = gridElement.children().not(".k-grid-content"),
+            otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 25);
+    }
+
+    function filter(e) {
+        grid = $("#grid").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        var text = e.value;
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "ten_phan_cap_duyet", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ten_don_vi", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ten_chuc_vu", operator: "contains", value: text });
+
+            filter.filters.push(filterOr);
+        }
+        grid.dataSource.filter(filter);
+        console.log(text)
+    }
+
+    function doSearch() {
+        //var listChucVu = $("#listChucVu option:selected");
+        var listChucVu = $("#listChucVu").val();
+        var listDonVi = $("#listDonVi").val();
+        var postData = { listChucVu: listChucVu, listDonVi: listDonVi };
+        $.ajax({
+            type: "POST",
+            async: false,
+            dataType: 'json',
+            //traditional: true,
+            url: r + "/ApproveLevel/GetDataFilter",
+            data: postData,
+            success: function (data) {
+                if (data.success) {
+                    $("#multi_selectUserInBranch").html('');
+                    var html = "";
+                    for (var i = 0; i < data.data.length ; i++) {
+                        html += "<option value ='" + data.data[i].ma_nguoi_dung + "'>" + data.data[i].ten_nguoi_dung + "</option>";
+                    }
+                    $("#multi_selectUserInBranch").html(html);
+                    $("#multi_selectUserInBranch").val(selectUserInBranch);
+                    $("#multi_selectUserInBranch").multiSelect('refresh');
+
+                  
+                }
+            }
+        });
+    }
+</script>

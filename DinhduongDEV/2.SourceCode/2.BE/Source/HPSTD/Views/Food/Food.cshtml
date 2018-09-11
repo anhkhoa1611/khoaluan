@@ -1,0 +1,468 @@
+﻿
+@using HPSTD.Core.Entities;
+@using HPSTD.Models;
+@using HPSTD.Helpers;
+@model Food
+@{
+    bool xem = ViewBag.accessDetail != null ? ViewBag.accessDetail.xem : false;
+    bool sua = ViewBag.accessDetail != null ? ViewBag.accessDetail.sua : false;
+    bool them = ViewBag.accessDetail != null ? ViewBag.accessDetail.them : false;
+    bool xoa = ViewBag.accessDetail != null ? ViewBag.accessDetail.xoa : false;
+    bool xuat = ViewBag.accessDetail != null ? ViewBag.accessDetail.xuat : false;
+    bool nhap = ViewBag.accessDetail != null ? ViewBag.accessDetail.nhap : false;
+
+    ViewBag.Title = "Thông tin thực phẩm";
+
+    var listActive = new List<SelectListItem>
+    {
+    new SelectListItem{Text = "Hoạt động", Value = "true"},
+    new SelectListItem{Text = "Ngưng hoạt động", Value = "false"},
+    };
+
+    ViewBag.listActive = listActive;
+    var newData = new Food();
+}
+<script src="~/Scripts/jquery.validate.js"></script>
+<script src="@Url.Content("~/Scripts/jquery.blockUI.js")"></script>
+
+<div class="row-fluid widget-box">
+    <div class="span12">
+        <input type="text" id="txtSearch" class="span3" placeholder="Mã nhóm thực phẩm, tên nhóm" onchange="filter()" />
+        <select name="select" id="listStatus" class='chosen-select span3' data-placeholder="Trạng thái..." multiple onchange="filter()">
+            <option value="true">Hoạt động </option>
+            <option value="false">Ngưng hoạt động </option>
+        </select>
+        <button type="button" class="btn btn-small btn-primary" onclick="filter()">Lọc</button>
+        <button type="button" id="btnSearch" class="btn btn-grey btn-small" onclick="cancelFilter()">Hủy lọc</button>
+    </div>
+</div>
+<div class="row-fluid">
+    @(Html.Kendo()
+    .Grid<HPSTD.Core.Entities.Food>()
+    .Name("grid")
+    .Columns(columns =>
+    {
+        columns.Bound(p => p.id)
+              .HeaderTemplate("<input style='text-align:center;opacity:1;' type='checkbox' id= 'checkboxcheckAll'  onClick='checkAllDetail(this)' />")
+              .ClientTemplate("<input style='text-align:center' class='checkrowid' type='checkbox' id='#=id#'/> ")
+              .Width(25).Filterable(false).Sortable(false).HtmlAttributes(new { style = "text-align:center" });
+        columns.Template(@<text></text>).HtmlAttributes(new { style = "text-align: center;" }).ClientTemplate("<span ><a class='btn btn-mini btn-warning' style ='width:40px' href='" + Url.Action("IndexInfo", "Food", new { @ma_thuc_pham = "#=ma_thuc_pham#" }) + @"'> Sửa </a></span>").Width(70);
+        columns.Bound(p => p.ma_nhom_thuc_pham).Hidden();
+        columns.Bound(p => p.ma_thuc_pham).Hidden();
+        
+        columns.Bound(p => p.ten_thuc_pham).Width(200).Title("Tên thực phẩm");
+        columns.Bound(p => p.url_anh)
+        .ClientTemplate(@"<img src='#=url_anh ? url_anh : '/Images/Avatar/profile_pic.jpg'#'  onError='this.onerror = null; this.src =`#=r#/Images/icon_user.png`;' style='width:50px;height: 50px;border-radius:50%;text-align:center;'>")
+        .Width(100).Title("Hình ảnh").HtmlAttributes(new { style = "text-align:center" }).Filterable(true).Sortable(true);
+        columns.Bound(p => p.ten_nhom_thuc_pham).Width(150).Title("Tên nhóm thực phẩm");
+        columns.Bound(p => p.nang_luong).Width(100).Title("Năng lượng (Kcal)").HtmlAttributes(new { style = "text-align:right" }).Format("{0:N0}");
+        columns.Bound(p => p.nuoc).Width(100).Title("Nước (g)").HtmlAttributes(new { style = "text-align:right" }).Format("{0:N0}");
+        columns.Bound(p => p.protein).Width(100).Title("Đạm (g)").HtmlAttributes(new { style = "text-align:right" }).Format("{0:N0}");
+        columns.Bound(p => p.lipid).Width(100).Title("Béo (g)").HtmlAttributes(new { style = "text-align:right" }).Format("{0:N0}");
+        columns.Bound(p => p.glucid).Width(100).Title("Carbohydrate (g)").HtmlAttributes(new { style = "text-align:right" }).Format("{0:N0}");
+        columns.Bound(p => p.celluloza).Width(100).Title("Xơ (g)").HtmlAttributes(new { style = "text-align:right" }).Format("{0:N0}");
+        columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+        columns.Bound(p => p.nguoi_tao).Title("Người tạo").Filterable(false).Width(90);
+        columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Filterable(false).Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+        columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Filterable(false).Width(90);
+    })
+    .ToolBar(s =>
+    {
+        if (them)
+        {
+            s.Custom().Text("Thêm")
+               .HtmlAttributes(new { @class = "btn btn-success btn-small", @Href = @Url.Action("IndexInfo", "Food") });
+        }
+        if (xoa)
+        {
+            s.Custom().Text("Xóa")
+                 .HtmlAttributes(new { @class = "btn btn-danger btn-small", @Href = "javascript:void(0)", @onclick = "showConfirmPopup()" });
+        }
+        if (nhap)
+        {
+            s.Custom().Text("Tải mẫu Excel")
+                 .HtmlAttributes(new { @class = "btn btn-info btn-small", @Href = @Url.Action("ExportTemplate", "Food") });
+            s.Custom().Text("Nhập Excel")
+                 .HtmlAttributes(new { @class = "btn btn-primary btn-small", @Href = "javascript:void(0)", @onclick = "showConfirmPopupImport()" });
+        }
+        if (xuat)
+        {
+            s.Custom().Text("Xuất dữ liệu")
+                .HtmlAttributes(new { @class = "btn btn-info btn-small", @Href = @Url.Action("ExportData", "Food") });
+        }
+    })
+    .Sortable()
+    .Pageable(pager => pager.PageSizes(new[] { 100, 200, 300, 500 }))
+    .Selectable(s => s.Mode(GridSelectionMode.Single).Type(GridSelectionType.Row))
+    .Pageable(p => p
+        .Messages(m => m
+                .Display("{0}-{1} của {2} dòng")
+                .Empty("Không có dòng nào")
+                .ItemsPerPage("dòng trên trang")
+                .First("Trang kế")
+                .Last("Trang tiếp")
+                .Next("Đầu trang")
+                .Previous("Cuối trang")
+        )
+    )
+    //.Editable(editable => editable.Mode(GridEditMode.InCell))
+    .Scrollable()
+    .Events(e => { e.DataBound("Databound"); })
+    .Navigatable()
+    .Reorderable(r => r.Columns(true))
+    .Resizable(r => r.Columns(true))
+    .DataSource(dataSource => dataSource
+      .Ajax()
+    //.Sort(s =>
+    //{
+    //    s.Add("id");
+    //})
+    .Batch(true)
+    .PageSize(100)
+        //.Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+        .Model(model =>
+        {
+            model.Id(p => p.id);
+        })
+        .Read(read => read.Action("Read", "Food"))
+    ))
+</div>
+
+<div id="popup-confirm" class="modal hide">
+    <div class="k-window-titlebar k-header">
+        <span class="k-window-title">Thông báo</span>
+    </div>
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid form-horizontal">
+            <p>
+                <span>Bạn có chắc chắn muốn xóa dữ liệu?</span>
+            </p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-info btn-small" onclick="Delete()"> Đồng ý</a>
+        <a class="btn btn-default btn-small" data-dismiss="modal">Bỏ qua</a>
+    </div>
+</div>
+
+
+@*POPUP IMPORT EXCELL*@
+<div id="popup-import" class="modal hide">
+    <form action="~/Food/Import" method="post" id="importForm" enctype="multipart/form-data" class="form-inline" style="margin:0px">
+        <div class="k-window-titlebar k-header">
+            <span class="k-window-title">Import</span>
+        </div>
+        <div class="modal-body overflow-visible">
+            <div class="row-fluid form-horizontal">
+                <label>Chọn file </label>
+                <input name="FileUpload" type="file" id="FileUpload" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a class="btn btn-info btn-small" onclick="Import()"> Đồng ý</a>
+            <a class="btn btn-default btn-small" data-dismiss="modal">Đóng</a>
+        </div>
+    </form>
+</div>
+<script>
+    
+    $('#listStatus').chosen();
+    var reset = false;
+    function saveAndClear() {
+        reset = true;
+        $('#createEditFrom').submit();
+
+    }
+    function save() {
+        reset = false;
+        $('#createEditFrom').submit();
+    }
+    var ma_khu_vuc;
+    function add(e) {
+        ma_khu_vuc = "";
+        $("#editAdd").modal('show');
+        loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'))
+        $('#title-process').text('').append('Thêm nhóm thực phẩm');
+    }
+
+    function getMakhuvuc() {
+        return {
+            ma_khu_vuc: ma_khu_vuc
+        }
+    }
+    function edit(e) {
+        var data = $("#grid").data("kendoGrid").dataItem($(e).closest("tr"));
+        $("#editAdd").modal('show');
+        $('#title-process').text('').append('Sửa nhóm thực phẩm');
+        ma_khu_vuc = data.ma_khu_vuc;
+        loadForm(data)
+        $('select[name="trang_thai"]').val(data.trang_thai).trigger('chosen:updated');
+    }
+    function loadForm(data) {
+        var EditTemplate = kendo.template($("#EditTemplate").html());
+        $(".editAdd").html(EditTemplate(data));
+        Validate()
+    }
+    function Validate() {
+        $.validator.setDefaults({ ignore: ":hidden:not(select)" })
+        $("#createEditFrom").validate({
+            rules: {
+                'ten_nhom_thuc_pham': { required: true },
+                'ma_nhom_thuc_pham': { required: true },
+
+            },
+            messages: {
+                'ten_nhom_thuc_pham': { required: "Thông tin bắt buộc" },
+                'ma_nhom_thuc_pham': { required: "Thông tin bắt buộc" },
+            },
+            errorPlacement: function (error, element) {
+            },
+            submitHandler: function (form) {
+
+                $(form).ajaxSubmit({
+                    clearForm: false,
+                    beforeSend: function () {
+                        blockUI(true);
+                    },
+                    success: function (data) {
+                        blockUI(false);
+                        if (data.success) {
+                            $("#grid").data("kendoGrid").dataSource.read()
+                            if (reset) {
+                                reset = false;
+                                if($("#iddetail").val() < 1){
+                                    loadForm(JSON.parse('@Html.Raw(Json.Encode(newData))'));
+                                }
+                            } else {
+                                $('#editAdd').modal('hide');
+                            }
+                            $.gritter.add({
+                                title: '',
+                                text: "Lưu thành công",
+                                class_name: 'gritter-success'
+
+                            });
+
+                        }
+                        else {
+                            $.gritter.add({
+                                text: "Báo lỗi: " + data.error,
+                                class_name: 'gritter-error'
+                            });
+                        }
+                    },
+                    error: function (data) {
+                    }
+                });
+                return false;
+            }
+        });
+
+    }
+    function cancelFilter() {
+        $('input').val
+        $('select').val('').trigger('chosen:updated');
+        filter();
+    }
+    function Databound() {
+        resizeGrid()
+    }
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+            dataArea = gridElement.find(".k-grid-content"),
+            otherElements = gridElement.children().not(".k-grid-content"),
+            otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 25);
+    }
+    function checkAllDetail(e) {
+        var x = $(e).prop('checked');
+        $("#grid").find(".checkrowid").each(function () {
+            $(this).prop('checked', x);
+        });
+    }
+    function showConfirmPopup() {
+        var listrowid = "";
+        $('#grid').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+            deleteId = 1;
+            $("#divMaskPopup").show();
+            $('#popup-confirm').modal('show');
+        }
+        else {
+            $.gritter.add({
+                title: '',
+                text: 'Vui lòng chọn dữ liệu muốn xóa',
+                class_name: 'gritter-error'
+            });
+        }
+    }
+    function Delete() {
+        var listrowid = "";
+        $('#grid').find(".checkrowid").each(function () {
+            if ($(this).prop('checked') == true) {
+                listrowid += $(this).attr("id") + '@@@@';
+            }
+        });
+        if (listrowid != "" && listrowid != null) {
+            $.post("Food/Delete", { data: listrowid }, function (data) {
+                if (data.success) {
+                    $.gritter.add({
+                        text: "Xóa dữ liệu thành công",
+                        class_name: 'gritter-success'
+                    });
+                    $("#grid").data("kendoGrid").dataSource.read();
+                }
+                else {
+                    $.gritter.add({
+                        text: data.error,
+                        class_name: 'gritter-error'
+                    });
+                }
+                $('#popup-confirm').modal('hide');
+            });
+        }
+    }
+    function filter() {
+        grid = $("#grid").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        var text = $("#txtSearch").val();
+
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "ten_nhom_thuc_pham", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ma_nhom_thuc_pham", operator: "contains", value: text });
+            filter.filters.push(filterOr);
+        }
+
+        var listStatus = $("#listStatus option:selected");
+        var fillterStatus = { logic: "or", filters: [] };
+        if (listStatus.length > 0) {
+            for (var i = 0; i < listStatus.length; i++) {
+                var option = listStatus[i].value;
+                if (option != '') {
+                    fillterStatus.filters.push({ field: "trang_thai", operator: "eq", value: option });
+                }
+            }
+            filter.filters.push(fillterStatus);
+        }
+        grid.dataSource.filter(filter);
+
+    }
+
+    // Show popup Import Excell
+    function showConfirmPopupImport() {
+        $('#popup-import').modal('show');
+    }
+    // import excell
+    function Import() {
+        $('#importForm').submit();
+    }
+    //Vaidate form import
+    $(document).ready(function () {
+        $('#FileUpload').ace_file_input({
+            no_file: 'Chưa chọn tập tin ...',
+            btn_choose: 'Chọn',
+            btn_change: 'Thay đổi',
+            droppable: false,
+            onchange: null,
+            thumbnail: false, //| true | large
+            allowExt: ['gif', 'png', 'jpg', 'jpeg', 'xlsx', 'xls', 'doc', 'docx', 'pdf'],
+            denyExt: ['exe', 'php'],
+            maxSize: 5120000,
+            //onchange:''
+            before_change: function (files, dropped) {
+                var allowed_files = [];
+                for (var i = 0 ; i < files.length; i++) {
+                    var file = files[i];
+                    if (typeof file === "string") {
+                        //IE8 and browsers that don't support File Object
+                        if (!(/\.(xlsx|xls)$/i).test(file))
+                            //if (!(/\.(jpe?g|png|gif|bmp|doc|docx|xlsx|xls|pdf)$/i).test(file))
+                            return false;
+                    }
+                    else {
+                        var type = $.trim(file.type);
+                        var isValidLength = type.length > 0;
+                        var isApplication = (/^application\/(pdf|msword|vnd.openxmlformats-officedocument.spreadsheetml.sheet)$/i).test(type);
+                        //var isValidFileName = (/\.(jpe?g|png|gif|bmp|doc|docx|xlsx|xls|pdf)$/i).test(file.name);
+                        var isValidFileName = (/\.(xlsx|xls)$/i).test(file.name);
+                        //var isImage = (/^image\/(jpe?g|png|gif|bmp)$/i).test(type);
+                        if (isValidLength) {
+                            if (!isApplication && !isValidFileName) {
+                                alert('Sai định dạng file(*.xlsx,*.xls): ' + file.name);
+                                continue;
+                            }
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    allowed_files.push(file);
+                }
+                if (allowed_files.length === 0) return false;
+                return allowed_files;
+            }
+        });
+    });
+    function onCloseForm() {
+        $('#txtcontent').val('');
+        $('.modal').modal('hide');
+    }
+    $("#importForm").validate({
+        submitHandler: function (form) {
+            $("#importForm").ajaxSubmit({
+                uploadProgress: function (event, position, total, percentComplete) { },
+                success: function (data) {
+                    if (data.success) {
+                        $("#grid").data("kendoGrid").dataSource.read();
+                        if (data.totalError > 0) {
+                            $.gritter.add({
+                                title: 'Lỗi',
+                                text: "Có dòng lỗi, tải về để sửa lại.",
+                                class_name: 'gritter-error'
+                            });
+                            window.open( "/ExcelImport/" + data.link, "_blank");
+                        }
+                        else {
+                            $.gritter.add({
+                                title: '',
+                                text: "Nhập thành công " + data.total + " trang",
+                                class_name: 'gritter-success',
+                                button: 'zzz'
+                            });
+                        }
+                        $('#FileUpload').ace_file_input('reset_input');
+                    } else {
+                        $.gritter.add({
+                            title: '',
+                            text: "Báo lỗi " + data.message,
+                            class_name: 'gritter-error',
+                            button: 'zzz'
+                        });
+                    }
+                    onCloseForm();
+                }
+            });
+        },
+    });
+    function blockUI(isMark) {
+        if (isMark) {
+            $(document).ajaxStart($.blockUI({ message: '<i class="fa fa-spinner fa-3x fa-lg fa-spin txt-color-blueDark"></i>', theme: false })).ajaxStop($.unblockUI);
+        }
+        else {
+            $(document).ajaxStart($.blockUI({ message: '<i class="fa fa-spinner fa-3x fa-lg fa-spin txt-color-blueDark"></i>', theme: false, overlayCSS: { backgroundColor: 'transparent' } })).ajaxStop($.unblockUI);
+        }
+    }
+
+    var timeout;
+
+
+</script>

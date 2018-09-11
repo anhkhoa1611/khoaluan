@@ -1,0 +1,165 @@
+﻿@model HDBank.Models.Users
+@{
+    ViewBag.Title = "AddNew";
+}
+
+<style>
+    .editor-label {
+        padding: 0 0 0 !important;
+    }
+
+    .k-edit-form-container {
+        width: 500px;
+    }
+
+    .k-invalidx {
+        width: 80%;
+    }
+</style>
+
+
+<div class="form-horizontal in-grid-form">
+    <fieldset class="span5" style="float:left">
+        <div class="control-group">
+            <label class="control-label" for="UserName">Tài khoản</label>
+            <div class="controls">
+                <input class="k-invalidx" placeholder="Vui lòng nhập tài khoản viết thường, không dấu" data-val="true" data-val-required="Tên tài khoản là bắt buộc." id="UserName" name="UserName" type="text" value="" data-bind="value:UserName" aria-invalid="true">
+                <span class="field-validation-valid" data-valmsg-for="Title" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="FullName">Họ tên</label>
+            <div class="controls">
+                <input class="k-invalidx" placeholder="Họ tên" data-val="true" data-val-required="Họ tên là bắt buộc." id="FullName" name="FullName" type="text" value="" data-bind="value:FullName" aria-invalid="true">
+                <span class="field-validation-valid" data-valmsg-for="Detail" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="Phone">Số điện thoại</label>
+            <div class="controls">
+                <input class="k-invalidx" placeholder="Số điện thoại" data-val="true" id="Phone" name="Phone" type="text" value="" data-bind="value:Phone" aria-invalid="true">
+                <span class="field-validation-valid" data-valmsg-for="Phone" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="Birthday">Ngày sinh</label>
+            <div class="controls">
+                @(Html.Kendo().DatePicker().Name("Birthday").HtmlAttributes(new { validationmessage = "Đây là thông tin bắt buộc", }))
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="Address">Địa chỉ</label>
+            <div class="controls">
+                <input class="k-invalidx" placeholder="Địa chỉ" data-val="true" id="Address" name="Address" type="text" value="" data-bind="value:Address" aria-invalid="true">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label" for="Email">Email</label>
+            <div class="controls">
+                <input class="k-invalidx" placeholder="Email" data-val="true"  data-fv-emailaddress-message="Không đúng định dạng email" id="Email" name="Email" type="email" value="" data-bind="value:Email" aria-invalid="true" >
+                <span class="field-validation-valid" data-valmsg-for="Detail" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+        <div class="control-group" style="display:none;">
+            <label class="control-label" for="Category">Password</label>
+            <div class="controls">
+                <input class="k-invalidx" placeholder="Password" data-val="true" id="Password" name="Password" type="password" value="" data-bind="value:Password" aria-invalid="true">
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="Active">Trạng thái</label>
+            <div class="controls">
+                <input type="checkbox" id="Active" name="Active" data-bind="value:Active">
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="TypeID">Nhóm quyền</label>
+            <div class="controls">
+                @(Html.Kendo().MultiSelectFor(m => m.Groups).HtmlAttributes(new { @style = "width: 303px;" })
+                    .DataTextField("Name")
+                    .DataValueField("Id")
+                    .BindTo((IEnumerable<HDBank.Models.GroupViewModel>)ViewData["listGroup"])
+                )
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label class="control-label" for="TypeID">Giới tính</label>
+            <div class="controls">
+                @(Html.Kendo().DropDownListFor(m => m.Gender)
+                                        .HtmlAttributes(new { @style = "width: 303px;" })
+                                        .OptionLabel("Chọn...")
+                                        .DataTextField("Description")
+                                        .DataValueField("CodeID")
+                                        .DataSource(source =>
+                                        {
+                                            source.Read(read =>
+                                            {
+                                                read.Action("getListGender", "Users");
+                                            });
+                                        })
+                )
+            </div>
+        </div>
+        <div class="control-group" style="display:none">
+            <label class="control-label" for="TypeID">Chức vụ</label>
+            <div class="controls">
+                @(Html.Kendo().DropDownListFor(m => m.Position)
+                        .HtmlAttributes(new { @style = "width: 303px;" })
+                        .OptionLabel("Chọn...")
+                        .DataTextField("PositionName")
+                        .DataValueField("PositionID")
+                        .DataSource(source => { source.Read(read => { read.Action("getListPosition", "Users"); });})
+                )
+            </div>
+        </div>
+        <div class="control-group" style="display:none">
+            <label class="control-label" for="TypeID">Cấp bậc</label>
+            <div class="controls">
+                @(Html.Kendo().DropDownListFor(m => m.LevelID)
+                              .HtmlAttributes(new { @style = "width: 303px;" })
+                              .OptionLabel("Chọn...")
+                              .DataTextField("Description")
+                              .DataValueField("LevelID")
+                                        .DataSource(source =>
+                                        {  source
+                                            .Read(read =>{read.Action("getListlevel", "Users")
+                                            .Data("filterLevel");})
+                                            .ServerFiltering(true);
+                                        }).Enable(false).AutoBind(false).CascadeFrom("Position")
+                )
+            </div>
+        </div>
+        <div class="control-group" style="display:none">
+            <label class="control-label" for="TypeID">Phòng ban</label>
+            <div class="controls">
+                @(Html.Kendo().DropDownListFor(m => m.DepartmentID)
+                                .HtmlAttributes(new { @style = "width: 303px;" })
+                                .OptionLabel("Chọn...")
+                                .DataTextField("Department")
+                                .DataValueField("DepartmentID")
+                                .DataSource(source =>
+                                    { source.Read(read => { read.Action("getListDepartment", "Users"); }); })
+                )
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="TypeID">Nhóm</label>
+            <div class="controls">
+                @(Html.Kendo().DropDownListFor(m => m.Team)
+                                .HtmlAttributes(new { @style = "width: 303px;" })
+                                .OptionLabel("Chọn...")
+                                .DataTextField("TeamName")
+                                .DataValueField("TeamID")
+                                .DataSource(source =>
+                                        {source.Read(read =>{read.Action("getListTeam", "Users");});})
+                )
+            </div>
+        </div>
+    </fieldset>
+</div>
+

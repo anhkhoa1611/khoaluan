@@ -1,0 +1,248 @@
+﻿@using HDBank.Core.Entities
+@{
+    ViewBag.Title = "Nhóm hàng hóa - người dùng";
+}
+<link href="~/Content/assets/global/plugins/jquery-multi-select/css/multi-select.css" rel="stylesheet" />
+<script src="~/Content/assets/global/plugins/jquery-multi-select/js/jquery.multi-select.js"></script>
+<style>
+    .form-actions {
+        background: 0 0 !important;
+        padding: 0px 0px !important;
+        border: none !important;
+    }
+
+    .form-actions.right {
+        text-align: right !important;
+    }
+
+    .ms-container .ms-list {
+        height: 350px !important;
+    }
+</style>
+
+<div class="row-fluid widget-box">
+    <div class="span12">
+        <div class="span4">
+            <input type="text" class="span12" placeholder="Người dùng" onkeyup="filter(this)" />
+        </div>
+    </div>
+</div>
+
+
+<div class="row-fluid">
+    @(Html.Kendo()
+    .Grid<UserProductCategory>()
+    .Name("grid")
+    .Columns(columns =>
+    {
+        columns.Bound(p => p.id).Hidden();
+        columns.Bound(p => p.id_nguoi_dung).Hidden();
+        columns.Template(@<text></text>).HtmlAttributes(new { style = "text-align: center;" })
+                                .ClientTemplate("<span ><a class='btn btn-mini btn-warning' style ='width:40px' onclick='onOpenPopup(this)'> Sửa </a></span> ").Width(80);
+        columns.Bound(p => p.ma_nguoi_dung).HtmlAttributes(new { data_id = "#=ma_nguoi_dung#" }).Title("Tên đăng nhập").Width(120);
+        columns.Bound(p => p.ten_nguoi_dung).Width(150).Title("Họ tên");
+        //columns.ForeignKey(p => p.ma_chi_nhanh, (System.Collections.IEnumerable)ViewBag.listDonVi, "ma_chi_nhanh", "ten_chi_nhanh").Title("Thuộc đơn vị").Width(120);
+        columns.Bound(p => p.ListProduct).Width(500).Title("Nhóm sản phẩm");
+        columns.Bound(p => p.ngay_tao).Title("Ngày tạo").Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+        columns.Bound(p => p.nguoi_tao).Title("Người tạo").Width(90);
+        columns.Bound(p => p.ngay_cap_nhat).Title("Ngày sửa").Width(120).Format("{0:dd/MM/yyyy HH:mm}").HtmlAttributes(new { style = "text-align:right" });
+        columns.Bound(p => p.nguoi_cap_nhat).Title("Người sửa").Width(90);
+    })
+        .Sortable()
+        .Pageable(pager => pager.PageSizes(new[] { 50, 100, 200, 300 }))
+        .Pageable(p => p
+        .Messages(m => m
+            .Display("{0}-{1} của {2} dòng")
+            .Empty("Không có dòng nào")
+            .ItemsPerPage("dòng trên trang")
+            .First("Trang kế")
+            .Last("Trang tiếp")
+            .Next("Đầu trang")
+            .Previous("Cuối trang")
+            )
+        )
+        .Scrollable()
+        .Events(e =>
+        {
+            e.DataBound("Databound");
+        })
+        .Navigatable()
+        .Reorderable(r => r.Columns(true))
+        .Resizable(r => r.Columns(true))
+        .DataSource(dataSource => dataSource
+            .Ajax()
+            .PageSize(20)
+            //.Events(events => { events.Error("error_handler"); events.RequestEnd("onRequestEnd"); })
+            .Model(model =>
+            {
+                model.Id(p => p.id);
+            })
+            .Read(read => read.Action("Read", "UserProductCategory"))
+        ))
+</div>
+
+
+<div id="popup-selectProductCategory" class="modal hide" tabindex="-1" style="width:800px !important; left:42%">
+    <form action=@Url.Action("CreateUpdate", "UserProductCategory") id="EditForm" method="post" enctype="multipart/form-data" style="margin:0px">
+        <div class="k-window-titlebar k-header">
+            <span class="k-window-title" id="title-process">Cập nhật nhóm sản phẩm - người dùng</span>
+        </div>
+        <div class="selectProductCategory"></div>
+
+        <div class="modal-footer">
+            <button class="btn btn-info btn-small" id="btnSaveProductCategory" onclick="SaveProductCategory()">Lưu</button>
+            <a class="btn btn-default btn-small" data-dismiss="modal">Hủy</a>
+        </div>
+    </form>
+</div>
+
+<script type="text/template" id="EditTemplate">
+    <div class="modal-body overflow-visible">
+        <div class="row-fluid">
+            <input type="hidden" id="id_nguoi_dung" name="id_nguoi_dung" />
+            <div class="row-fluid">
+                <div class="control-group">
+                    <label class="control-label">Mã người dùng</label>
+                    <div class="controls">
+                        <input id="ma_nguoi_dung" name="ma_nguoi_dung" class="form-control input-sm" readonly />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Danh sách sản phẩm</label>
+                    <div class="controls">
+                        <select multiple="multiple" class="multi-select" id="multi_selectProductCategory" name="lstma_phan_cap">
+                            @foreach (var item in ViewBag.listProductCategory)
+                            {
+                                <option value="@Html.Raw(item.ma_phan_cap)">@Html.Raw(item.ten_phan_cap)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script>
+
+    $(document).ready(function () {
+
+        $("#EditForm").validate({
+            rules: {
+            },
+            messages: {
+            },
+            errorPlacement: function (error, element) {
+                error.insertAfter(element);
+            },
+            submitHandler: function (form) {
+
+                $(form).ajaxSubmit({
+                    clearForm: true,//To clear form after ajax submitting
+                    success: function (data) {
+                        $('#popup-selectProductCategory').modal('hide');
+                        $("#grid").data("kendoGrid").dataSource.read();
+                        if (data.success) {
+                            $.gritter.add({
+                                title: '',
+                                text: "Lưu thành công!",
+                                class_name: 'gritter-success'
+                            });
+                        }
+                        else {
+                            $.gritter.add({
+                                title: '',
+                                text: "Báo lỗi" + data.error,
+                                class_name: 'gritter-error'
+                            });
+                        }
+                    }
+                });
+                return false;
+            }
+        });
+    })
+    function Databound() {
+        resizeGrid();
+    }
+
+    function resizeGrid() {
+        var offsetbottom = parseInt($(window).height()) - parseInt($('#grid').offset().top);
+        var gridElement = $("#grid"),
+        dataArea = gridElement.find(".k-grid-content"),
+        otherElements = gridElement.children().not(".k-grid-content"),
+        otherElementsHeight = 0;
+        otherElements.each(function () {
+            otherElementsHeight += $(this).outerHeight();
+        });
+        dataArea.height(offsetbottom - otherElementsHeight - 12);
+    }
+
+    function filter(e) {
+        grid = $("#grid").data("kendoGrid");
+        var filter = { logic: "and", filters: [] };
+        var text = e.value;
+        if (text) {
+            var filterOr = { logic: "or", filters: [] };
+            filterOr.filters.push({ field: "ma_nguoi_dung", operator: "contains", value: text });
+            filterOr.filters.push({ field: "ten_nguoi_dung", operator: "contains", value: text });
+            filter.filters.push(filterOr);
+        }
+        grid.dataSource.filter(filter);
+    }
+
+    function onOpenPopup(obj) {
+        var currentRow = $(obj).closest("tr");
+        var dataItem = $("#grid").data("kendoGrid").dataItem(currentRow);
+
+        var EditTemplate = kendo.template($("#EditTemplate").html());
+        $(".selectProductCategory").html(EditTemplate({}));
+
+        onBindDataToForm(dataItem);
+
+        $.ajax({
+            type: "POST",
+            async: false,
+            url: r + "/UserProductCategory/GetProductCategoryByID",
+            data: { id_nguoi_dung: dataItem.id_nguoi_dung },
+            success: function (data) {
+                if (data.success) {
+                    $("#multi_selectProductCategory").multiSelect();
+                    var selectProductCategory = $.map(data.data, function (value, index) {
+                        return [value];
+                    });
+                    $("#multi_selectProductCategory").val(selectProductCategory);
+                    $("#multi_selectProductCategory").multiSelect('refresh');
+                }
+            }
+        });
+
+        $("#popup-selectProductCategory").modal('show');
+    }
+
+    function onBindDataToForm(dataItem) {
+        for (var propName in dataItem) {
+            if (dataItem[propName] != null && dataItem[propName].constructor.toString().indexOf("Date") > -1) {
+                var d = kendo.toString(kendo.parseDate(dataItem[propName]), 'dd/MM/yyyy')
+                if (d != '01/01/1900') {
+                    $("#" + propName).val(d);
+                }
+            }
+            else {
+                $("#" + propName).val(dataItem[propName]);
+            }
+        }
+    }
+
+</script>
+
+
+<script>
+    function SaveProductCategory() {
+        $("#EditForm").submit();
+    };
+
+    function Cancel() {
+        $('#popup-selectProductCategory').modal('hide');
+    }
+</script>
